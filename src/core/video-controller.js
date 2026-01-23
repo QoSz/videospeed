@@ -6,8 +6,26 @@
 window.VSC = window.VSC || {};
 
 class VideoController {
+  /**
+   * Get existing controller or create new one for a video element.
+   * Preferred factory method that makes the singleton-per-video pattern explicit.
+   * @param {HTMLMediaElement} target - Video/audio element
+   * @param {HTMLElement} parent - Parent element for positioning
+   * @param {Object} config - Configuration object
+   * @param {ActionHandler} actionHandler - Action handler instance
+   * @param {boolean} shouldStartHidden - Whether controller should start hidden
+   * @returns {VideoController} Controller instance (existing or new)
+   */
+  static getOrCreate(target, parent, config, actionHandler, shouldStartHidden = false) {
+    if (target.vsc) {
+      return target.vsc;
+    }
+    return new VideoController(target, parent, config, actionHandler, shouldStartHidden);
+  }
+
   constructor(target, parent, config, actionHandler, shouldStartHidden = false) {
-    // Return existing controller if already attached
+    // Singleton pattern: return existing controller if already attached
+    // Note: This return-from-constructor pattern ensures one controller per video
     if (target.vsc) {
       return target.vsc;
     }

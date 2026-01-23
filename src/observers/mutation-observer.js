@@ -11,7 +11,8 @@ class VideoMutationObserver {
     this.onVideoRemoved = onVideoRemoved;
     this.mediaObserver = mediaObserver;
     this.observer = null;
-    this.shadowObservers = new Set();
+    // Map of shadowRoot → MutationObserver for proper cleanup
+    this.shadowObservers = new Map();
   }
 
   /**
@@ -187,8 +188,11 @@ class VideoMutationObserver {
    * @private
    */
   checkForVideoAndShadowRoot(node, parent, added) {
-    // Only proceed with removal if node is missing from DOM
-    if (!added && document.body?.contains(node)) {
+    // For removal events, only proceed if node is truly disconnected
+    // Using isConnected handles shadow DOM correctly and is more reliable
+    // than document.body.contains() which doesn't work well with shadow DOM
+    if (!added && node.isConnected) {
+      // Node is still connected somewhere (likely moved, not removed)
       return;
     }
 
@@ -261,7 +265,8 @@ class VideoMutationObserver {
     };
 
     shadowObserver.observe(shadowRoot, observerOptions);
-    this.shadowObservers.add(shadowRoot);
+    // Store observer instance for proper cleanup
+    this.shadowObservers.set(shadowRoot, shadowObserver);
 
     window.VSC.logger.debug('Shadow root observer added');
   }
@@ -284,10 +289,9 @@ class VideoMutationObserver {
       this.observer = null;
     }
 
-    // Clean up shadow observers
-    this.shadowObservers.forEach((_shadowRoot) => {
-      // Note: We can't access the observer directly, but disconnecting the main
-      // observer should handle most cases. Shadow observers will be garbage collected.
+    // Clean up shadow observers - properly disconnect each one
+    this.shadowObservers.forEach((observer, _shadowRoot) => {
+      observer.disconnect();
     });
     this.shadowObservers.clear();
 

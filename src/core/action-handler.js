@@ -25,8 +25,10 @@ class ActionHandler {
 
     // Get the controller that was used if called from a button press event
     let targetController = null;
-    if (e) {
-      targetController = e.target.getRootNode().host;
+    if (e && e.target) {
+      const rootNode = e.target.getRootNode();
+      // Only get host if rootNode is a ShadowRoot (not Document)
+      targetController = rootNode instanceof ShadowRoot ? rootNode.host : null;
     }
 
     mediaTags.forEach((v) => {
@@ -254,7 +256,7 @@ class ActionHandler {
    * @param {number} value - Amount to increase
    */
   volumeUp(video, value) {
-    video.volume = Math.min(1, (video.volume + value).toFixed(2));
+    video.volume = Math.min(1, Number((video.volume + value).toFixed(2)));
   }
 
   /**
@@ -263,7 +265,7 @@ class ActionHandler {
    * @param {number} value - Amount to decrease
    */
   volumeDown(video, value) {
-    video.volume = Math.max(0, (video.volume - value).toFixed(2));
+    video.volume = Math.max(0, Number((video.volume - value).toFixed(2)));
   }
 
   /**

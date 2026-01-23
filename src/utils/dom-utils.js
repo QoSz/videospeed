@@ -96,12 +96,17 @@ window.VSC.DomUtils.inIframe = function () {
  * @returns {Array<Element>} Flattened array of all elements
  */
 window.VSC.DomUtils.getShadow = function (parent, maxDepth = 10) {
+  // Validate parent parameter
+  if (!parent || typeof parent !== 'object') {
+    return [];
+  }
+
   const result = [];
   const visited = new WeakSet(); // Prevent infinite loops
 
   function getChild(element, depth = 0) {
     // Prevent infinite recursion and excessive depth
-    if (depth > maxDepth || visited.has(element)) {
+    if (!element || depth > maxDepth || visited.has(element)) {
       return;
     }
 
@@ -115,8 +120,11 @@ window.VSC.DomUtils.getShadow = function (parent, maxDepth = 10) {
 
         // Only traverse shadow roots if we haven't exceeded depth limit
         if (child.shadowRoot && depth < maxDepth - 2) {
-          // Always handle shadow roots synchronously to maintain function contract
-          result.push(...window.VSC.DomUtils.getShadow(child.shadowRoot, maxDepth - depth));
+          // Recursively get shadow DOM elements and add directly to result
+          const shadowElements = window.VSC.DomUtils.getShadow(child.shadowRoot, maxDepth - depth);
+          for (const el of shadowElements) {
+            result.push(el);
+          }
         }
 
         child = child.nextElementSibling;
@@ -125,7 +133,8 @@ window.VSC.DomUtils.getShadow = function (parent, maxDepth = 10) {
   }
 
   getChild(parent);
-  return result.flat(Infinity);
+  // No need for flat() since we're pushing elements directly
+  return result;
 };
 
 /**

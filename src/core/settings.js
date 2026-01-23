@@ -32,20 +32,24 @@ if (!window.VSC.VideoSpeedConfig) {
           await this.save({ keyBindings: this.settings.keyBindings });
         }
 
-        // Apply loaded settings
-        this.settings.lastSpeed = Number(storage.lastSpeed);
-        this.settings.displayKeyCode = Number(storage.displayKeyCode);
+        // Apply loaded settings with NaN fallback to defaults
+        const defaults = window.VSC.Constants.DEFAULT_SETTINGS;
+        const numOrDefault = (val, fallback) => {
+          const num = Number(val);
+          return isNaN(num) ? fallback : num;
+        };
+
+        this.settings.lastSpeed = numOrDefault(storage.lastSpeed, defaults.lastSpeed);
+        this.settings.displayKeyCode = numOrDefault(storage.displayKeyCode, defaults.displayKeyCode);
         this.settings.rememberSpeed = Boolean(storage.rememberSpeed);
         this.settings.forceLastSavedSpeed = Boolean(storage.forceLastSavedSpeed);
         this.settings.audioBoolean = Boolean(storage.audioBoolean);
         this.settings.enabled = Boolean(storage.enabled);
         this.settings.startHidden = Boolean(storage.startHidden);
-        this.settings.controllerOpacity = Number(storage.controllerOpacity);
-        this.settings.controllerButtonSize = Number(storage.controllerButtonSize);
-        this.settings.blacklist = String(storage.blacklist);
-        this.settings.logLevel = Number(
-          storage.logLevel || window.VSC.Constants.DEFAULT_SETTINGS.logLevel
-        );
+        this.settings.controllerOpacity = numOrDefault(storage.controllerOpacity, defaults.controllerOpacity);
+        this.settings.controllerButtonSize = numOrDefault(storage.controllerButtonSize, defaults.controllerButtonSize);
+        this.settings.blacklist = String(storage.blacklist || '');
+        this.settings.logLevel = numOrDefault(storage.logLevel, defaults.logLevel);
 
         // Ensure display binding exists (for upgrades)
         this.ensureDisplayBinding(storage);
@@ -85,9 +89,13 @@ if (!window.VSC.VideoSpeedConfig) {
             const speedToSave = this.pendingSave;
             this.pendingSave = null;
             this.saveTimer = null;
-            
-            await window.VSC.StorageManager.set({ ...this.settings, lastSpeed: speedToSave });
-            window.VSC.logger.info('Debounced speed setting saved successfully');
+
+            try {
+              await window.VSC.StorageManager.set({ ...this.settings, lastSpeed: speedToSave });
+              window.VSC.logger.info('Debounced speed setting saved successfully');
+            } catch (error) {
+              window.VSC.logger.error(`Failed to save debounced speed setting: ${error.message}`);
+            }
           }, this.SAVE_DELAY);
           
           return;

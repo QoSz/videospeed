@@ -53,16 +53,22 @@ class VSCStateManager {
    */
   getAllMediaElements() {
     const elements = [];
+    const disconnectedIds = [];
 
-    // Clean up disconnected controllers while iterating
+    // First pass: collect elements and identify disconnected controllers
     for (const [id, info] of this.controllers) {
       const video = info.controller?.video || info.element;
       if (video && video.isConnected) {
         elements.push(video);
       } else {
-        // Remove disconnected controller
-        this.controllers.delete(id);
+        // Mark for removal (don't delete during iteration)
+        disconnectedIds.push(id);
       }
+    }
+
+    // Second pass: clean up disconnected controllers
+    for (const id of disconnectedIds) {
+      this.controllers.delete(id);
     }
 
     return elements;

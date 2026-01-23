@@ -11,11 +11,31 @@ class DragHandler {
    * @param {MouseEvent} e - Mouse event
    */
   static handleDrag(video, e) {
+    // Validate required elements exist
+    if (!video?.vsc?.div) {
+      window.VSC.logger.warn('handleDrag: video controller not found');
+      return;
+    }
+
     const controller = video.vsc.div;
+
+    if (!controller.shadowRoot) {
+      window.VSC.logger.warn('handleDrag: controller shadowRoot not found');
+      return;
+    }
+
     const shadowController = controller.shadowRoot.querySelector('#controller');
+    if (!shadowController) {
+      window.VSC.logger.warn('handleDrag: shadow controller element not found');
+      return;
+    }
 
     // Find nearest parent of same size as video parent
     const parentElement = window.VSC.DomUtils.findVideoParent(controller);
+    if (!parentElement) {
+      window.VSC.logger.warn('handleDrag: parent element not found');
+      return;
+    }
 
     video.classList.add('vcs-dragging');
     shadowController.classList.add('dragging');

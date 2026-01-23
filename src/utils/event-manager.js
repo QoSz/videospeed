@@ -9,7 +9,9 @@ class EventManager {
     this.config = config;
     this.actionHandler = actionHandler;
     this.listeners = new Map();
-    this.coolDown = false;
+    // Separate boolean flag from timer ID for clarity
+    this.coolDownActive = false;
+    this.coolDownTimer = null;
     this.timer = null;
 
     // Event deduplication to prevent duplicate key processing
@@ -166,7 +168,7 @@ class EventManager {
    * @private
    */
   handleRateChange(event) {
-    if (this.coolDown) {
+    if (this.coolDownActive) {
       window.VSC.logger.debug('Rate change event blocked by cooldown');
 
       // Get the video element to restore authoritative speed
@@ -251,12 +253,19 @@ class EventManager {
   refreshCoolDown() {
     window.VSC.logger.debug('Begin refreshCoolDown');
 
-    if (this.coolDown) {
-      clearTimeout(this.coolDown);
+    // Clear existing timer if any
+    if (this.coolDownTimer) {
+      clearTimeout(this.coolDownTimer);
+      this.coolDownTimer = null;
     }
 
-    this.coolDown = setTimeout(() => {
-      this.coolDown = false;
+    // Activate cooldown
+    this.coolDownActive = true;
+
+    // Set timer to deactivate cooldown
+    this.coolDownTimer = setTimeout(() => {
+      this.coolDownActive = false;
+      this.coolDownTimer = null;
     }, EventManager.COOLDOWN_MS);
 
     window.VSC.logger.debug('End refreshCoolDown');
@@ -309,9 +318,10 @@ class EventManager {
 
     this.listeners.clear();
 
-    if (this.coolDown) {
-      clearTimeout(this.coolDown);
-      this.coolDown = false;
+    if (this.coolDownTimer) {
+      clearTimeout(this.coolDownTimer);
+      this.coolDownTimer = null;
+      this.coolDownActive = false;
     }
 
     if (this.timer) {

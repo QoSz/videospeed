@@ -29,12 +29,16 @@ class MediaElementObserver {
       const results = [];
       // Add any matching elements in current shadow root
       results.push(...root.querySelectorAll(selector));
-      // Recursively check all elements with shadow roots
-      root.querySelectorAll('*').forEach((element) => {
+
+      // Check all elements for shadow roots
+      // Note: Only custom elements (with hyphens in tag names) can have shadow roots,
+      // but checking element.shadowRoot is a fast property lookup so no pre-filtering needed
+      const allElements = root.querySelectorAll('*');
+      for (const element of allElements) {
         if (element.shadowRoot) {
           results.push(...findShadowMedia(element.shadowRoot, selector));
         }
-      });
+      }
       return results;
     }
 
