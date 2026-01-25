@@ -214,24 +214,22 @@ class VideoController {
    * @private
    */
   setupEventHandlers() {
-    const mediaEventAction = (event) => {
-      const targetSpeed = this.getTargetSpeed(event.target);
-
-      window.VSC.logger.info(`Media event ${event.type}: restoring speed to ${targetSpeed}`);
-      this.actionHandler.adjustSpeed(event.target, targetSpeed, { source: 'internal' });
-    };
-
-    // Bind event handlers
-    this.handlePlay = mediaEventAction.bind(this);
-    this.handleSeek = mediaEventAction.bind(this);
-
-    // Add essential event listeners for speed restoration
-    this.video.addEventListener('play', this.handlePlay);
-    this.video.addEventListener('seeked', this.handleSeek);
-
-    window.VSC.logger.debug(
-      'Added essential media event handlers: play, seeked'
-    );
+    // NOTE: We intentionally do NOT add play/seeked event handlers here.
+    //
+    // Previously, this method added listeners for 'play' and 'seeked' events
+    // that would reset speed to lastSpeed. This caused a bug where:
+    // 1. User sets speed to 1.5x
+    // 2. User switches to another window/app
+    // 3. User returns to the video
+    // 4. Browser/site fires 'play' event (common behavior)
+    // 5. Handler would reset speed, causing unexpected speed changes
+    //
+    // Speed synchronization is now handled entirely by:
+    // - EventManager.handleRateChange() for external speed changes
+    // - forceLastSavedSpeed setting for users who want strict speed enforcement
+    //
+    // This provides better user experience by preserving manual speed changes.
+    window.VSC.logger.debug('setupEventHandlers: no play/seeked handlers (speed managed by ratechange listener)');
   }
 
   /**
@@ -270,14 +268,6 @@ class VideoController {
     // Remove DOM element
     if (this.div && this.div.parentNode) {
       this.div.remove();
-    }
-
-    // Remove event listeners
-    if (this.handlePlay) {
-      this.video.removeEventListener('play', this.handlePlay);
-    }
-    if (this.handleSeek) {
-      this.video.removeEventListener('seeked', this.handleSeek);
     }
 
     // Disconnect mutation observer

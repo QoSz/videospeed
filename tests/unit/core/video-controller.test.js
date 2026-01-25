@@ -268,7 +268,11 @@ runner.test('VideoController should initialize in global speed mode correctly', 
   assert.equal(mockVideo.playbackRate, 2.25);
 });
 
-runner.test('VideoController should properly setup event handlers', async () => {
+runner.test('VideoController should properly setup without play/seeked event handlers', async () => {
+  // NOTE: This test was updated when play/seeked event handlers were removed.
+  // Those handlers caused a bug where speed would reset unexpectedly when
+  // switching windows. Speed synchronization is now handled by the
+  // EventManager.handleRateChange() listener instead.
   const config = window.VSC.videoSpeedConfig;
   await config.load();
 
@@ -278,7 +282,7 @@ runner.test('VideoController should properly setup event handlers', async () => 
   const mockVideo = createMockVideo();
   mockDOM.container.appendChild(mockVideo);
 
-  // Track event listeners added
+  // Track event listeners added to video element
   const addedListeners = [];
   const originalAddEventListener = mockVideo.addEventListener;
   mockVideo.addEventListener = function (type, listener, options) {
@@ -288,9 +292,10 @@ runner.test('VideoController should properly setup event handlers', async () => 
 
   const controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
 
-  // Should have added media event listeners
+  // Should NOT have added play/seeked event listeners (those caused speed reset bug)
   const listenerTypes = addedListeners.map(l => l.type);
-  assert.true(addedListeners.length > 0); // Should have added some listeners
+  assert.false(listenerTypes.includes('play'), 'should not add play listener');
+  assert.false(listenerTypes.includes('seeked'), 'should not add seeked listener');
 
   // Should have proper vsc structure with speedIndicator
   assert.exists(mockVideo.vsc);
