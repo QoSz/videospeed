@@ -28,7 +28,9 @@ class ActionHandler {
     if (e && e.target) {
       const rootNode = e.target.getRootNode();
       // Only get host if rootNode is a ShadowRoot (not Document)
-      targetController = rootNode instanceof ShadowRoot ? rootNode.host : null;
+      // Use duck-typing check instead of instanceof to work in both browser and JSDOM tests
+      const isShadowRoot = rootNode && rootNode.host && rootNode !== document;
+      targetController = isShadowRoot ? rootNode.host : null;
     }
 
     mediaTags.forEach((v) => {
@@ -455,10 +457,16 @@ class ActionHandler {
       this.eventManager.refreshCoolDown();
     }
 
-    // 3. Set the actual playback rate (triggers native ratechange event)
+    // 3. Update per-video expected speed BEFORE setting playbackRate
+    // This allows EventManager to verify/restore using the video's own expected speed
+    if (video.vsc) {
+      video.vsc.expectedSpeed = numericSpeed;
+    }
+
+    // 4. Set the actual playback rate (triggers native ratechange event)
     video.playbackRate = numericSpeed;
 
-    // 4. Dispatch synthetic event with source tracking
+    // 5. Dispatch synthetic event with source tracking
     // This allows EventManager to distinguish our changes from external ones
     video.dispatchEvent(
       new CustomEvent('ratechange', {
@@ -472,7 +480,7 @@ class ActionHandler {
       })
     );
 
-    // 5. Update UI indicator
+    // 6. Update UI indicator
     const speedIndicator = video.vsc?.speedIndicator;
     if (!speedIndicator) {
       window.VSC.logger.warn(
@@ -482,7 +490,7 @@ class ActionHandler {
     }
     speedIndicator.textContent = numericSpeed.toFixed(2);
 
-    // 6. Save to storage ONLY if rememberSpeed is enabled for cross-session persistence
+    // 7. Save to storage ONLY if rememberSpeed is enabled for cross-session persistence
     if (this.config.settings.rememberSpeed) {
       window.VSC.logger.debug(`Saving lastSpeed ${numericSpeed} to Chrome storage`);
       this.config.save({
@@ -492,7 +500,7 @@ class ActionHandler {
       window.VSC.logger.debug('NOT saving to storage - rememberSpeed is false');
     }
 
-    // 7. Show controller briefly for visual feedback
+    // 8. Show controller briefly for visual feedback
     if (video.vsc?.div) {
       this.blinkController(video.vsc.div);
     }

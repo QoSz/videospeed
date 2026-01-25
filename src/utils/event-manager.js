@@ -169,20 +169,25 @@ class EventManager {
    */
   handleRateChange(event) {
     if (this.coolDownActive) {
-      window.VSC.logger.debug('Rate change event blocked by cooldown');
-
-      // Get the video element to restore authoritative speed
+      // During cooldown, verify the video's actual speed matches its expected speed.
+      // Use the PER-VIDEO expected speed (not global lastSpeed) to avoid cross-video contamination.
+      // This handles edge cases where stopImmediatePropagation doesn't fully prevent external changes.
       const video = event.composedPath ? event.composedPath()[0] : event.target;
 
-      // RESTORE our authoritative value since external change already happened
-      if (video.vsc && this.config.settings.lastSpeed !== undefined) {
-        const authoritativeSpeed = this.config.settings.lastSpeed;
-        if (Math.abs(video.playbackRate - authoritativeSpeed) > 0.01) {
-          window.VSC.logger.info(`Restoring speed during cooldown from external ${video.playbackRate} to authoritative ${authoritativeSpeed}`);
-          video.playbackRate = authoritativeSpeed;
+      if (video && video.vsc && video.vsc.expectedSpeed !== null) {
+        const expectedSpeed = video.vsc.expectedSpeed;
+        const actualSpeed = video.playbackRate;
+
+        // If there's a mismatch, restore the per-video expected speed
+        if (Math.abs(actualSpeed - expectedSpeed) > 0.001) {
+          window.VSC.logger.debug(
+            `Cooldown: speed drift detected (expected=${expectedSpeed}, actual=${actualSpeed}), restoring`
+          );
+          video.playbackRate = expectedSpeed;
         }
       }
 
+      window.VSC.logger.debug('Rate change event blocked by cooldown');
       event.stopImmediatePropagation();
       return;
     }

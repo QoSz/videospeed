@@ -43,6 +43,11 @@ class VideoController {
     // Transient reset memory (not persisted, instance-specific)
     this.speedBeforeReset = null;
 
+    // Per-video expected speed tracking
+    // This is the authoritative speed for THIS video, used during cooldown
+    // to verify/restore speed without cross-video contamination
+    this.expectedSpeed = null;
+
     // Attach controller to video element first (needed for adjustSpeed)
     target.vsc = this;
 
@@ -76,6 +81,9 @@ class VideoController {
     const targetSpeed = this.getTargetSpeed();
 
     window.VSC.logger.debug(`Setting initial playbackRate to: ${targetSpeed}`);
+
+    // Set the initial expected speed for this video
+    this.expectedSpeed = targetSpeed;
 
     // Use adjustSpeed for initial speed setting to ensure consistency
     if (this.actionHandler && targetSpeed !== this.video.playbackRate) {
