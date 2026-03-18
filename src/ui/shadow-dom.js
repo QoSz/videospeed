@@ -20,129 +20,154 @@ class ShadowDOMManager {
     const style = document.createElement('style');
     style.textContent = `
       * {
-        line-height: 1.8em;
-        font-family: sans-serif;
-        font-size: 13px;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
       }
-      
+
+      #controller {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: rgba(15, 15, 20, 0.65);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        border-radius: 24px;
+        padding: 4px 10px;
+        margin: 10px 10px 10px 15px;
+        cursor: default;
+        z-index: 9999999;
+        white-space: nowrap;
+        transition: all 0.25s ease;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      #controller:hover {
+        background: rgba(15, 15, 20, 0.75);
+        border-color: rgba(255, 255, 255, 0.18);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+      }
+
       :host(:hover) #controls {
-        display: inline-block;
+        display: inline-flex;
+        opacity: 1;
       }
-      
-      /* Hide shadow DOM content for different hiding scenarios */
+
       :host(.vsc-hidden) #controller,
       :host(.vsc-nosource) #controller {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
       }
-      
-      /* Override hiding for manual controllers (unless explicitly hidden) */
+
       :host(.vsc-manual:not(.vsc-hidden)) #controller {
-        display: block !important;
+        display: inline-flex !important;
         visibility: visible !important;
         opacity: ${opacity} !important;
       }
-      
-      /* Show shadow DOM content when host has vsc-show class (highest priority) */
+
       :host(.vsc-show) #controller {
-        display: block !important;
+        display: inline-flex !important;
         visibility: visible !important;
         opacity: ${opacity} !important;
       }
-      
-      #controller {
-        position: absolute;
-        top: 0;
-        left: 0;
-        background: black;
-        color: white;
-        border-radius: 6px;
-        padding: 4px;
-        margin: 10px 10px 10px 15px;
-        cursor: default;
-        z-index: 9999999;
-        white-space: nowrap;
-      }
-      
-      #controller:hover {
-        opacity: 0.7;
-      }
-      
-      #controller:hover>.draggable {
-        margin-right: 0.8em;
-      }
-      
-      #controls {
-        display: none;
-        vertical-align: middle;
-      }
-      
-      #controller.dragging {
-        cursor: -webkit-grabbing;
-        opacity: 0.7;
-      }
-      
-      #controller.dragging #controls {
-        display: inline-block;
-      }
-      
+
       .draggable {
-        cursor: -webkit-grab;
+        cursor: grab;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 2.8em;
+        min-width: 2.4em;
         height: 1.4em;
         text-align: center;
         vertical-align: middle;
-        box-sizing: border-box;
+        font-weight: 700;
+        font-size: ${buttonSize}px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.02em;
       }
-      
+
       .draggable:active {
-        cursor: -webkit-grabbing;
+        cursor: grabbing;
       }
-      
-      button {
+
+      #controls {
+        display: none;
+        align-items: center;
+        gap: 2px;
+        margin-left: 4px;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        font-size: ${buttonSize}px;
+        line-height: ${buttonSize}px;
+      }
+
+      #controller.dragging {
+        cursor: grabbing;
+      }
+
+      #controller.dragging #controls {
+        display: inline-flex;
         opacity: 1;
+      }
+
+      #controller:hover > .draggable {
+        margin-right: 2px;
+      }
+
+      button {
         cursor: pointer;
-        color: black;
-        background: white;
-        font-weight: normal;
-        border-radius: 5px;
-        padding: 1px 5px 3px 5px;
+        color: rgba(255, 255, 255, 0.75);
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        padding: 2px 6px;
         font-size: inherit;
         line-height: inherit;
-        border: 0px solid white;
-        font-family: "Lucida Console", Monaco, monospace;
-        margin: 0px 2px 2px 2px;
-        transition: background 0.2s, color 0.2s;
+        font-family: inherit;
+        font-weight: 500;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.6em;
       }
-      
+
       button:focus {
-        outline: 0;
+        outline: none;
       }
-      
+
       button:hover {
-        opacity: 1;
-        background: #2196f3;
-        color: #ffffff;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.12);
       }
-      
+
       button:active {
-        background: #2196f3;
-        color: #ffffff;
-        font-weight: bold;
+        background: rgba(255, 255, 255, 0.2);
       }
-      
+
       button.rw {
-        opacity: 0.65;
+        color: rgba(255, 255, 255, 0.55);
       }
-      
+
+      button.rw:hover {
+        color: #fff;
+      }
+
       button.hideButton {
-        opacity: 0.65;
-        margin-left: 8px;
-        margin-right: 2px;
+        color: rgba(255, 255, 255, 0.45);
+        margin-left: 4px;
+      }
+
+      button.hideButton:hover {
+        color: #fff;
       }
     `;
     shadow.appendChild(style);

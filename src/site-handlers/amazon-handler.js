@@ -10,11 +10,12 @@ class AmazonHandler extends window.VSC.BaseSiteHandler {
    * @returns {boolean} True if on Amazon
    */
   static matches() {
+    const h = location.hostname;
     return (
-      location.hostname === 'www.amazon.com' ||
-      location.hostname === 'www.primevideo.com' ||
-      location.hostname.includes('amazon.') ||
-      location.hostname.includes('primevideo.')
+      h === 'www.amazon.com' ||
+      h === 'www.primevideo.com' ||
+      h.endsWith('.amazon.com') ||
+      h.endsWith('.primevideo.com')
     );
   }
 

@@ -12,8 +12,14 @@
     <h1>Video Speed Controller</h1>
   </header>
 
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="shortcuts">Shortcuts</button>
+    <button class="tab-btn" data-tab="settings">Settings</button>
+    <button class="tab-btn" data-tab="help">Help</button>
+  </nav>
+
+  <div class="tab-content active" data-tab="shortcuts">
   <section id="customs">
-    <h3>Shortcuts</h3>
     <div class="row customs" id="display">
       <select class="customDo">
         <option value="display">Show/hide controller</option>
@@ -80,9 +86,10 @@
 
     <button id="add">Add New</button>
   </section>
+  </div>
 
+  <div class="tab-content" data-tab="settings">
   <section>
-    <h3>Other</h3>
     <div class="row">
       <label for="audioBoolean">Audio support</label>
       <input id="audioBoolean" type="checkbox" />
@@ -100,15 +107,15 @@
         <em>Prevent video players that override VSC speed</em></label>
       <input id="forceLastSavedSpeed" type="checkbox" />
     </div>
-    <div class="row advanced-feature">
+    <div class="row">
       <label for="controllerOpacity">Controller opacity</label>
       <input id="controllerOpacity" type="text" value="" />
     </div>
-    <div class="row advanced-feature">
+    <div class="row">
       <label for="controllerButtonSize">Controller Button Size</label>
       <input id="controllerButtonSize" type="text" value="" />
     </div>
-    <div class="row advanced-feature">
+    <div class="row">
       <label for="logLevel">Console Log Level<br />
         <em>Set verbosity in the browser console</em></label>
       <select id="logLevel">
@@ -120,7 +127,7 @@
         <option value="6">Verbose</option>
       </select>
     </div>
-    <div class="row advanced-feature">
+    <div class="row">
       <label for="blacklist">Disable on sites<br />
         <em>One host or <a href="https://www.regexpal.com/">Regex</a> per line. Use the literal notation, e.g.
           <code>/(.+)youtube\.com(\/*)$/gi</code></em>
@@ -132,15 +139,15 @@
   <div class="button-group">
     <div class="primary-buttons">
       <button id="save">Save</button>
-      <button id="experimental">Show advanced features</button>
     </div>
     <button id="restore">Restore defaults</button>
   </div>
 
   <div id="status"></div>
+  </div>
 
+  <div class="tab-content" data-tab="help">
   <section>
-    <h3>Help & Support</h3>
     <div class="row">
       <button id="about" class="secondary">About Video Speed Controller</button>
       <button id="feedback" class="secondary">Send Feedback</button>
@@ -162,6 +169,7 @@
 
 
   </section>
+  </div>
 </body>
 
 </html>

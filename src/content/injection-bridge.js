@@ -70,14 +70,18 @@ export function setupMessageBridge() {
 
     // Handle responses if needed
     if (request.action === 'get-status') {
-      // Wait for response from page context
+      // Wait for response from page context with timeout cleanup
       const responseHandler = (event) => {
         if (event.data?.source === 'vsc-page' && event.data?.action === 'status-response') {
+          clearTimeout(timeoutId);
           window.removeEventListener('message', responseHandler);
           sendResponse(event.data.data);
         }
       };
       window.addEventListener('message', responseHandler);
+      const timeoutId = setTimeout(() => {
+        window.removeEventListener('message', responseHandler);
+      }, 5000);
       return true; // Keep message channel open for async response
     }
   });

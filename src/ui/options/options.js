@@ -102,6 +102,11 @@ var keyCodeAliases = {
   222: "'"
 };
 
+function keyCodeDisplayName(keyCode) {
+  return keyCodeAliases[keyCode] ||
+    (keyCode >= 48 && keyCode <= 90 ? String.fromCharCode(keyCode) : `Key ${keyCode}`);
+}
+
 function recordKeyPress(e) {
   // Special handling for backspace and escape
   if (e.keyCode === 8) {
@@ -127,9 +132,7 @@ function recordKeyPress(e) {
   }
 
   // Accept all other keys
-  // Use friendly name if available, otherwise show "Key {code}"
-  e.target.value = keyCodeAliases[e.keyCode] ||
-    (e.keyCode >= 48 && e.keyCode <= 90 ? String.fromCharCode(e.keyCode) : `Key ${e.keyCode}`);
+  e.target.value = keyCodeDisplayName(e.keyCode);
   e.target.keyCode = e.keyCode;
 
   e.preventDefault();
@@ -149,22 +152,12 @@ function inputFocus(e) {
 }
 
 function inputBlur(e) {
-  const keyCode = e.target.keyCode;
-  e.target.value = keyCodeAliases[keyCode] ||
-    (keyCode >= 48 && keyCode <= 90 ? String.fromCharCode(keyCode) : `Key ${keyCode}`);
+  e.target.value = keyCodeDisplayName(e.target.keyCode);
 }
 
-function updateShortcutInputText(inputId, keyCode) {
-  const input = document.getElementById(inputId);
-  input.value = keyCodeAliases[keyCode] ||
-    (keyCode >= 48 && keyCode <= 90 ? String.fromCharCode(keyCode) : `Key ${keyCode}`);
+function setKeyInput(input, keyCode) {
+  input.value = keyCodeDisplayName(keyCode);
   input.keyCode = keyCode;
-}
-
-function updateCustomShortcutInputText(inputItem, keyCode) {
-  inputItem.value = keyCodeAliases[keyCode] ||
-    (keyCode >= 48 && keyCode <= 90 ? String.fromCharCode(keyCode) : `Key ${keyCode}`);
-  inputItem.keyCode = keyCode;
 }
 
 
@@ -196,18 +189,14 @@ function add_shortcut() {
     customs_element.children[customs_element.childElementCount - 1]
   );
 
-  // If experimental features are already enabled, add the force select
-  const experimentalButton = document.getElementById("experimental");
-  if (experimentalButton && experimentalButton.disabled) {
-    const customValue = div.querySelector('.customValue');
-    const select = document.createElement('select');
-    select.className = 'customForce show';
-    select.innerHTML = `
-      <option value="false">Default behavior</option>
-      <option value="true">Override site keys</option>
-    `;
-    customValue.parentNode.insertBefore(select, customValue.nextSibling);
-  }
+  const customValue = div.querySelector('.customValue');
+  const forceSelect = document.createElement('select');
+  forceSelect.className = 'customForce';
+  forceSelect.innerHTML = `
+    <option value="false">Default behavior</option>
+    <option value="true">Override site keys</option>
+  `;
+  customValue.parentNode.insertBefore(forceSelect, customValue.nextSibling);
 }
 
 function createKeyBindings(item) {
@@ -390,7 +379,7 @@ async function restore_options() {
 
 
         if (keyInput) {
-          updateCustomShortcutInputText(keyInput, item["key"]);
+          setKeyInput(keyInput, item["key"]);
         }
         if (valueInput) {
           valueInput.value = item["value"];
@@ -411,7 +400,7 @@ async function restore_options() {
           }
         }
 
-        updateCustomShortcutInputText(
+        setKeyInput(
           dom.querySelector(".customKey"),
           item["key"]
         );
@@ -436,11 +425,6 @@ async function restore_options() {
       }
     }
 
-    // Check if any keybindings have force property set, if so, show experimental features
-    const hasExperimentalFeatures = keyBindings.some(kb => kb.force !== undefined && kb.force !== false);
-    if (hasExperimentalFeatures) {
-      show_experimental();
-    }
   } catch (error) {
     console.error("Failed to restore options:", error);
     document.getElementById("status").textContent = "Error loading options: " + error.message;
@@ -495,68 +479,6 @@ async function restore_defaults() {
   }
 }
 
-function show_experimental() {
-  const button = document.getElementById("experimental");
-  const customRows = document.querySelectorAll('.row.customs');
-  const advancedRows = document.querySelectorAll('.row.advanced-feature');
-
-  // Show advanced feature rows
-  advancedRows.forEach((row) => {
-    row.classList.add('show');
-  });
-
-  // Create the select template
-  const createForceSelect = () => {
-    const select = document.createElement('select');
-    select.className = 'customForce show';
-    select.innerHTML = `
-      <option value="false">Allow event propagation</option>
-      <option value="true">Disable event propagation</option>
-    `;
-    return select;
-  };
-
-  // Add select to each row
-  customRows.forEach((row) => {
-    const existingSelect = row.querySelector('.customForce');
-
-    if (!existingSelect) {
-      // Create new select if it doesn't exist
-      const customValue = row.querySelector('.customValue');
-      const newSelect = createForceSelect();
-
-      // Check if this row has saved force value
-      const rowId = row.id;
-      if (rowId && window.VSC.videoSpeedConfig && window.VSC.videoSpeedConfig.settings.keyBindings) {
-        // For predefined shortcuts
-        const savedBinding = window.VSC.videoSpeedConfig.settings.keyBindings.find(kb => kb.action === rowId);
-        if (savedBinding && savedBinding.force !== undefined) {
-          newSelect.value = String(savedBinding.force);
-        }
-      } else if (!rowId) {
-        // For custom shortcuts, try to find the force value from the current keyBindings array
-        const rowIndex = Array.from(row.parentElement.querySelectorAll('.row.customs:not([id])')).indexOf(row);
-        const customBindings = window.VSC.videoSpeedConfig?.settings.keyBindings?.filter(kb => !kb.predefined) || [];
-        if (customBindings[rowIndex] && customBindings[rowIndex].force !== undefined) {
-          newSelect.value = String(customBindings[rowIndex].force);
-        }
-      }
-
-      // Insert after the customValue input
-      if (customValue) {
-        customValue.parentNode.insertBefore(newSelect, customValue.nextSibling);
-      }
-    } else {
-      // If it already exists, just show it
-      existingSelect.classList.add('show');
-    }
-  });
-
-  // Update button text to indicate the feature is now enabled
-  button.textContent = "Advanced features enabled";
-  button.disabled = true;
-}
-
 // Create debounced save function to prevent rapid saves
 const debouncedSave = debounce(save_options, 300);
 
@@ -568,6 +490,16 @@ document.addEventListener("DOMContentLoaded", async function () {
   });
 
   await restore_options();
+
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelector(`.tab-content[data-tab="${btn.dataset.tab}"]`).classList.add('active');
+    });
+  });
 
   // Disable action dropdowns for predefined shortcuts
   document.querySelectorAll('.row.customs[id] .customDo').forEach(select => {
@@ -585,8 +517,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     e.preventDefault();
     await restore_defaults();
   });
-
-  document.getElementById("experimental").addEventListener("click", show_experimental);
 
   // About and feedback button event listeners
   document.getElementById("about").addEventListener("click", function () {
@@ -609,10 +539,10 @@ document.addEventListener("DOMContentLoaded", async function () {
   });
   document.addEventListener("focus", (event) => {
     eventCaller(event, "customKey", inputFocus);
-  });
+  }, true);
   document.addEventListener("blur", (event) => {
     eventCaller(event, "customKey", inputBlur);
-  });
+  }, true);
   document.addEventListener("keydown", (event) => {
     eventCaller(event, "customKey", recordKeyPress);
   });
@@ -623,7 +553,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   });
   document.addEventListener("change", (event) => {
     eventCaller(event, "customDo", function () {
-      const valueInput = event.target.nextElementSibling.nextElementSibling;
+      const valueInput = event.target.closest('.row.customs')?.querySelector('.customValue');
+      if (!valueInput) { return; }
       if (window.VSC.Constants.CUSTOM_ACTIONS_NO_VALUES.includes(event.target.value)) {
         valueInput.style.display = "none";
         valueInput.value = 0;

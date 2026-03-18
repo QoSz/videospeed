@@ -34,7 +34,7 @@ class SiteHandlerManager {
    */
   detectHandler() {
     for (const HandlerClass of this.availableHandlers) {
-      if (HandlerClass.matches()) {
+      if (HandlerClass?.matches?.()) {
         window.VSC.logger.info(`Using ${HandlerClass.name} for ${location.hostname}`);
         return new HandlerClass();
       }

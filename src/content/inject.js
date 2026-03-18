@@ -296,6 +296,12 @@ class VideoSpeedExtension {
 
 // Initialize extension and message handlers in an IIFE to avoid global scope pollution
 (function () {
+  // Prevent double injection - check before adding any listeners
+  if (window.VSC_controller && window.VSC_controller.initialized) {
+    window.VSC.logger?.info('VSC already initialized, skipping re-injection');
+    return;
+  }
+
   // Create and initialize extension instance
   const extension = new VideoSpeedExtension();
 
@@ -363,12 +369,6 @@ class VideoSpeedExtension {
       }
     }
   });
-
-  // Prevent double injection
-  if (window.VSC_controller && window.VSC_controller.initialized) {
-    window.VSC.logger?.info('VSC already initialized, skipping re-injection');
-    return;
-  }
 
   // Auto-initialize
   extension.initialize().catch((error) => {
