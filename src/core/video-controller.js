@@ -98,15 +98,19 @@ class VideoController {
    * @returns {number} Target speed
    * @private
    */
-  getTargetSpeed(media = this.video) {
+  getTargetSpeed(_media = this.video) {
     // Always start with current preferred speed (lastSpeed)
     // The difference is whether changes get saved back to lastSpeed
     const targetSpeed = this.config.settings.lastSpeed || 1.0;
 
     if (this.config.settings.rememberSpeed) {
-      window.VSC.logger.debug(`Remember mode: using lastSpeed ${targetSpeed} (changes will be saved)`);
+      window.VSC.logger.debug(
+        `Remember mode: using lastSpeed ${targetSpeed} (changes will be saved)`
+      );
     } else {
-      window.VSC.logger.debug(`Non-persistent mode: using lastSpeed ${targetSpeed} (changes won't be saved)`);
+      window.VSC.logger.debug(
+        `Non-persistent mode: using lastSpeed ${targetSpeed} (changes won't be saved)`
+      );
     }
 
     return targetSpeed;
@@ -325,15 +329,21 @@ class VideoController {
       return false;
     }
 
-    // Check computed style for visibility
-    const style = window.getComputedStyle(this.video);
-    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+    // Check dimensions first (cheaper than getComputedStyle - only triggers layout, not style recalc)
+    const rect = this.video.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) {
       return false;
     }
 
-    // Check if video has reasonable dimensions
-    const rect = this.video.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) {
+    // Check inline style first (free - no reflow) before falling back to getComputedStyle
+    const inlineStyle = this.video.style;
+    if (inlineStyle.display === 'none' || inlineStyle.visibility === 'hidden' || inlineStyle.opacity === '0') {
+      return false;
+    }
+
+    // Only call getComputedStyle if inline style doesn't definitively answer
+    const style = window.getComputedStyle(this.video);
+    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
       return false;
     }
 

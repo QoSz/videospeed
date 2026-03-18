@@ -21,29 +21,29 @@ class MediaElementObserver {
     const mediaTagSelector = audioEnabled ? 'video,audio' : 'video';
 
     // Find regular media elements
-    const regularMedia = Array.from(document.querySelectorAll(mediaTagSelector));
-    mediaElements.push(...regularMedia);
-
-    // Find media elements in shadow DOMs recursively
-    function findShadowMedia(root, selector) {
-      const results = [];
-      // Add any matching elements in current shadow root
-      results.push(...root.querySelectorAll(selector));
-
-      // Check all elements for shadow roots
-      // Note: Only custom elements (with hyphens in tag names) can have shadow roots,
-      // but checking element.shadowRoot is a fast property lookup so no pre-filtering needed
-      const allElements = root.querySelectorAll('*');
-      for (const element of allElements) {
-        if (element.shadowRoot) {
-          results.push(...findShadowMedia(element.shadowRoot, selector));
-        }
-      }
-      return results;
+    const regularMedia = document.querySelectorAll(mediaTagSelector);
+    for (let i = 0; i < regularMedia.length; i++) {
+      mediaElements.push(regularMedia[i]);
     }
 
-    const shadowMedia = findShadowMedia(document, mediaTagSelector);
-    mediaElements.push(...shadowMedia);
+    // Find media elements in shadow DOMs recursively
+    // Only check elements that can have shadow roots (skip the document-level query
+    // since we already found regular media above)
+    function findShadowMedia(root, selector) {
+      const allElements = root.querySelectorAll('*');
+      for (let i = 0; i < allElements.length; i++) {
+        const sr = allElements[i].shadowRoot;
+        if (sr) {
+          const matches = sr.querySelectorAll(selector);
+          for (let j = 0; j < matches.length; j++) {
+            mediaElements.push(matches[j]);
+          }
+          findShadowMedia(sr, selector);
+        }
+      }
+    }
+
+    findShadowMedia(document, mediaTagSelector);
 
     // Find site-specific media elements
     const siteSpecificMedia = this.siteHandler.detectSpecialVideos(document);

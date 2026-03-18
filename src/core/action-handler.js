@@ -126,7 +126,7 @@ class ActionHandler {
 
       case 'blink':
         window.VSC.logger.debug('Showing controller momentarily');
-        this.blinkController(video.vsc.div, value);
+        this.blinkController(video.vsc.div, value, video);
         break;
 
       case 'drag':
@@ -294,11 +294,14 @@ class ActionHandler {
    * Show controller briefly
    * @param {HTMLElement} controller - Controller element
    * @param {number} duration - Duration in ms (default 1000)
+   * @param {HTMLMediaElement} video - Optional video element to avoid expensive lookup
    */
-  blinkController(controller, duration) {
+  blinkController(controller, duration, video) {
     // Don't hide audio controllers after blinking - audio elements are often invisible by design
     // but should maintain visible controllers for user interaction
-    const isAudioController = this.isAudioController(controller);
+    const isAudioController = video
+      ? video.tagName === 'AUDIO'
+      : this.isAudioController(controller);
 
     // Always clear any existing timeout first
     if (controller.blinkTimeOut !== undefined) {
@@ -358,11 +361,7 @@ class ActionHandler {
     return window.VSC.logger.withContext(video, () => {
       const { relative = false, source = 'internal' } = options;
 
-      // DEBUG: Log all adjustSpeed calls to trace the mystery
       window.VSC.logger.debug(`adjustSpeed called: value=${value}, relative=${relative}, source=${source}`);
-      const stack = new Error().stack;
-      const stackLines = stack.split('\n').slice(1, 8); // First 7 stack frames
-      window.VSC.logger.debug(`adjustSpeed call stack: ${stackLines.join(' -> ')}`);
 
       // Validate input
       if (!video || !video.vsc) {
@@ -385,11 +384,6 @@ class ActionHandler {
    */
   _adjustSpeedInternal(video, value, options) {
     const { relative = false, source = 'internal' } = options;
-
-    // Show controller for visual feedback when speed is changed
-    if (video.vsc?.div && this.eventManager) {
-      this.eventManager.showController(video.vsc.div);
-    }
 
     // Calculate target speed
     let targetSpeed;
@@ -430,7 +424,7 @@ class ActionHandler {
    * @param {HTMLMediaElement} video - Video element (for API compatibility) 
    * @returns {number} Current preferred speed (always lastSpeed regardless of rememberSpeed setting)
    */
-  getPreferredSpeed(video) {
+  getPreferredSpeed(_video) {
     return this.config.settings.lastSpeed || 1.0;
   }
 
@@ -502,7 +496,7 @@ class ActionHandler {
 
     // 8. Show controller briefly for visual feedback
     if (video.vsc?.div) {
-      this.blinkController(video.vsc.div);
+      this.blinkController(video.vsc.div, undefined, video);
     }
   }
 

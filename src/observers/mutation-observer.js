@@ -46,16 +46,25 @@ class VideoMutationObserver {
    * @private
    */
   processMutations(mutations) {
-    mutations.forEach((mutation) => {
+    // Deduplicate: track nodes already processed to avoid redundant work
+    const processedAdded = new WeakSet();
+    const processedRemoved = new WeakSet();
+    const processedAttributes = new WeakSet();
+
+    for (let i = 0; i < mutations.length; i++) {
+      const mutation = mutations[i];
       switch (mutation.type) {
         case 'childList':
-          this.processChildListMutation(mutation);
+          this.processChildListMutation(mutation, processedAdded, processedRemoved);
           break;
         case 'attributes':
-          this.processAttributeMutation(mutation);
+          if (!processedAttributes.has(mutation.target)) {
+            processedAttributes.add(mutation.target);
+            this.processAttributeMutation(mutation);
+          }
           break;
       }
-    });
+    }
   }
 
   /**
@@ -63,32 +72,49 @@ class VideoMutationObserver {
    * @param {MutationRecord} mutation - Mutation record
    * @private
    */
-  processChildListMutation(mutation) {
+  processChildListMutation(mutation, processedAdded, processedRemoved) {
     // Handle added nodes
-    mutation.addedNodes.forEach((node) => {
+    const addedNodes = mutation.addedNodes;
+    for (let i = 0; i < addedNodes.length; i++) {
+      const node = addedNodes[i];
       // Only process element nodes (nodeType 1)
       if (!node || node.nodeType !== Node.ELEMENT_NODE) {
-        return;
+        continue;
+      }
+
+      if (processedAdded && processedAdded.has(node)) {
+        continue;
+      }
+      if (processedAdded) {
+        processedAdded.add(node);
       }
 
       if (node === document.documentElement) {
         // Document was replaced (e.g., watch.sling.com uses document.write)
         window.VSC.logger.debug('Document was replaced, reinitializing');
         this.onDocumentReplaced();
-        return;
+        continue;
       }
 
       this.checkForVideoAndShadowRoot(node, node.parentNode || mutation.target, true);
-    });
+    }
 
     // Handle removed nodes
-    mutation.removedNodes.forEach((node) => {
+    const removedNodes = mutation.removedNodes;
+    for (let i = 0; i < removedNodes.length; i++) {
+      const node = removedNodes[i];
       // Only process element nodes (nodeType 1)
       if (!node || node.nodeType !== Node.ELEMENT_NODE) {
-        return;
+        continue;
+      }
+      if (processedRemoved && processedRemoved.has(node)) {
+        continue;
+      }
+      if (processedRemoved) {
+        processedRemoved.add(node);
       }
       this.checkForVideoAndShadowRoot(node, node.parentNode || mutation.target, false);
-    });
+    }
   }
 
   /**
@@ -108,8 +134,18 @@ class VideoMutationObserver {
         mutation.target.attributes['aria-hidden'].value === 'false') ||
       mutation.target.nodeName === 'APPLE-TV-PLUS-PLAYER'
     ) {
-      const flattenedNodes = window.VSC.DomUtils.getShadow(document.body);
-      const videoNodes = flattenedNodes.filter((x) => x.tagName === 'VIDEO');
+      // Search within the mutated element's subtree (not the entire document),
+      // including nested shadow roots for custom elements like Apple TV+ player
+      const searchRoot = mutation.target;
+      const videoNodes = [];
+      if (searchRoot.querySelectorAll) {
+        const direct = searchRoot.querySelectorAll('video');
+        for (let i = 0; i < direct.length; i++) {
+          videoNodes.push(direct[i]);
+        }
+      }
+      // Recursively search shadow roots within the subtree
+      window.VSC.DomUtils.findShadowMedia(searchRoot, 'video', videoNodes);
 
       for (const node of videoNodes) {
         // Only add vsc the first time for the apple-tv case
@@ -141,14 +177,19 @@ class VideoMutationObserver {
       return;
     }
 
+    // Skip leaf nodes that can't contain media (but check shadow roots too)
+    if ((!element.children || element.children.length === 0) && !element.shadowRoot) {
+      return;
+    }
+
     // Check if element contains videos
     const audioEnabled = this.config.settings.audioBoolean;
     const mediaTagSelector = audioEnabled ? 'video,audio' : 'video';
-    const videos = element.querySelectorAll ? element.querySelectorAll(mediaTagSelector) : [];
+    const videos = element.querySelectorAll(mediaTagSelector);
 
-    videos.forEach((video) => {
-      this.recheckVideoElement(video);
-    });
+    for (let i = 0; i < videos.length; i++) {
+      this.recheckVideoElement(videos[i]);
+    }
   }
 
   /**
@@ -220,22 +261,21 @@ class VideoMutationObserver {
    * @private
    */
   processNodeChildren(node, parent, added) {
-    let children = [];
-
     // Handle shadow DOM
     if (node.shadowRoot) {
       this.observeShadowRoot(node.shadowRoot);
-      children = Array.from(node.shadowRoot.children);
+      const shadowChildren = node.shadowRoot.children;
+      for (let i = 0; i < shadowChildren.length; i++) {
+        this.checkForVideoAndShadowRoot(shadowChildren[i], shadowChildren[i].parentNode || parent, added);
+      }
     }
 
     // Handle regular children
     if (node.children) {
-      children = [...children, ...Array.from(node.children)];
-    }
-
-    // Process all children
-    for (const child of children) {
-      this.checkForVideoAndShadowRoot(child, child.parentNode || parent, added);
+      const children = node.children;
+      for (let i = 0; i < children.length; i++) {
+        this.checkForVideoAndShadowRoot(children[i], children[i].parentNode || parent, added);
+      }
     }
   }
 

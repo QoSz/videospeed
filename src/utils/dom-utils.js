@@ -102,38 +102,36 @@ window.VSC.DomUtils.getShadow = function (parent, maxDepth = 10) {
   }
 
   const result = [];
-  const visited = new WeakSet(); // Prevent infinite loops
+  const visited = new WeakSet(); // Prevent infinite loops from circular references
+  // Use an explicit stack instead of recursion for better performance
+  const stack = [{ element: parent, depth: 0 }];
 
-  function getChild(element, depth = 0) {
-    // Prevent infinite recursion and excessive depth
+  while (stack.length > 0) {
+    const { element, depth } = stack.pop();
+
     if (!element || depth > maxDepth || visited.has(element)) {
-      return;
+      continue;
     }
-
     visited.add(element);
 
-    if (element.firstElementChild) {
-      let child = element.firstElementChild;
-      do {
-        result.push(child);
-        getChild(child, depth + 1);
+    let child = element.firstElementChild;
+    while (child) {
+      result.push(child);
 
-        // Only traverse shadow roots if we haven't exceeded depth limit
-        if (child.shadowRoot && depth < maxDepth - 2) {
-          // Recursively get shadow DOM elements and add directly to result
-          const shadowElements = window.VSC.DomUtils.getShadow(child.shadowRoot, maxDepth - depth);
-          for (const el of shadowElements) {
-            result.push(el);
-          }
-        }
+      // Queue children for processing
+      if (child.firstElementChild && depth + 1 <= maxDepth) {
+        stack.push({ element: child, depth: depth + 1 });
+      }
 
-        child = child.nextElementSibling;
-      } while (child);
+      // Traverse shadow roots
+      if (child.shadowRoot && depth < maxDepth - 2) {
+        stack.push({ element: child.shadowRoot, depth: depth + 1 });
+      }
+
+      child = child.nextElementSibling;
     }
   }
 
-  getChild(parent);
-  // No need for flat() since we're pushing elements directly
   return result;
 };
 
@@ -145,12 +143,21 @@ window.VSC.DomUtils.getShadow = function (parent, maxDepth = 10) {
 window.VSC.DomUtils.findVideoParent = function (element) {
   let parentElement = element.parentElement;
 
-  while (
-    parentElement.parentNode &&
-    parentElement.parentNode.offsetHeight === parentElement.offsetHeight &&
-    parentElement.parentNode.offsetWidth === parentElement.offsetWidth
-  ) {
+  // Read dimensions once per iteration to minimize layout thrashing.
+  // offsetHeight/offsetWidth trigger layout if dirty, but each read within
+  // the same frame after the first is cheap (cached by the engine).
+  let currentH = parentElement.offsetHeight;
+  let currentW = parentElement.offsetWidth;
+
+  while (parentElement.parentNode && parentElement.parentNode.nodeType === Node.ELEMENT_NODE) {
+    const parentH = parentElement.parentNode.offsetHeight;
+    const parentW = parentElement.parentNode.offsetWidth;
+    if (parentH !== currentH || parentW !== currentW) {
+      break;
+    }
     parentElement = parentElement.parentNode;
+    currentH = parentH;
+    currentW = parentW;
   }
 
   return parentElement;
@@ -164,24 +171,31 @@ window.VSC.DomUtils.findVideoParent = function (element) {
 window.VSC.DomUtils.initializeWhenReady = function (document, callback) {
   window.VSC.logger.debug('Begin initializeWhenReady');
 
-  const handleWindowLoad = () => {
-    callback(window.document);
+  let called = false;
+  const callOnce = (doc) => {
+    if (called) {
+      return;
+    }
+    called = true;
+    callback(doc);
   };
 
-  window.addEventListener('load', handleWindowLoad, { once: true });
+  if (document && document.readyState === 'complete') {
+    // Already ready - call immediately, skip adding listeners
+    callOnce(document);
+    return;
+  }
+
+  window.addEventListener('load', () => callOnce(window.document), { once: true });
 
   if (document) {
-    if (document.readyState === 'complete') {
-      callback(document);
-    } else {
-      const handleReadyStateChange = () => {
-        if (document.readyState === 'complete') {
-          document.removeEventListener('readystatechange', handleReadyStateChange);
-          callback(document);
-        }
-      };
-      document.addEventListener('readystatechange', handleReadyStateChange);
-    }
+    const handleReadyStateChange = () => {
+      if (document.readyState === 'complete') {
+        document.removeEventListener('readystatechange', handleReadyStateChange);
+        callOnce(document);
+      }
+    };
+    document.addEventListener('readystatechange', handleReadyStateChange);
   }
 
   window.VSC.logger.debug('End initializeWhenReady');
@@ -203,18 +217,21 @@ window.VSC.DomUtils.findMediaElements = function (node, audioEnabled = false) {
   const selector = audioEnabled ? 'video,audio' : 'video';
 
   // Check the node itself
-  if (node && node.matches && node.matches(selector)) {
+  if (node.matches && node.matches(selector)) {
     mediaElements.push(node);
   }
 
   // Check children
   if (node.querySelectorAll) {
-    mediaElements.push(...Array.from(node.querySelectorAll(selector)));
+    const children = node.querySelectorAll(selector);
+    for (let i = 0; i < children.length; i++) {
+      mediaElements.push(children[i]);
+    }
   }
 
   // Recursively check shadow roots
   if (node.shadowRoot) {
-    mediaElements.push(...window.VSC.DomUtils.findShadowMedia(node.shadowRoot, selector));
+    window.VSC.DomUtils.findShadowMedia(node.shadowRoot, selector, mediaElements);
   }
 
   return mediaElements;
@@ -226,27 +243,30 @@ window.VSC.DomUtils.findMediaElements = function (node, audioEnabled = false) {
  * @param {string} selector - CSS selector for media elements
  * @returns {Array<Element>} Array of media elements found
  */
-window.VSC.DomUtils.findShadowMedia = function (root, selector) {
-  const results = [];
+window.VSC.DomUtils.findShadowMedia = function (root, selector, results) {
+  if (!results) {
+    results = [];
+  }
 
   // If root is an element with shadowRoot, search in its shadow first
   if (root.shadowRoot) {
-    results.push(...window.VSC.DomUtils.findShadowMedia(root.shadowRoot, selector));
+    window.VSC.DomUtils.findShadowMedia(root.shadowRoot, selector, results);
   }
 
   // Add any matching elements in current root (if it's a shadowRoot/document)
   if (root.querySelectorAll) {
-    results.push(...Array.from(root.querySelectorAll(selector)));
-  }
+    const matches = root.querySelectorAll(selector);
+    for (let i = 0; i < matches.length; i++) {
+      results.push(matches[i]);
+    }
 
-  // Recursively check all elements with shadow roots
-  if (root.querySelectorAll) {
-    const allElements = Array.from(root.querySelectorAll('*'));
-    allElements.forEach((element) => {
-      if (element.shadowRoot) {
-        results.push(...window.VSC.DomUtils.findShadowMedia(element.shadowRoot, selector));
+    // Check elements with shadow roots - only custom elements can have them
+    const allElements = root.querySelectorAll('*');
+    for (let i = 0; i < allElements.length; i++) {
+      if (allElements[i].shadowRoot) {
+        window.VSC.DomUtils.findShadowMedia(allElements[i].shadowRoot, selector, results);
       }
-    });
+    }
   }
 
   return results;

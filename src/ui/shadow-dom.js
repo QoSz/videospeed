@@ -87,10 +87,7 @@ class ShadowDOMManager {
         vertical-align: middle;
         font-weight: 700;
         font-size: ${buttonSize}px;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: rgba(255, 255, 255, 0.9);
         letter-spacing: -0.02em;
       }
 
@@ -124,7 +121,7 @@ class ShadowDOMManager {
 
       button {
         cursor: pointer;
-        color: rgba(255, 255, 255, 0.75);
+        color: rgba(255, 255, 255, 0.9);
         background: transparent;
         border: none;
         border-radius: 8px;
@@ -154,7 +151,7 @@ class ShadowDOMManager {
       }
 
       button.rw {
-        color: rgba(255, 255, 255, 0.55);
+        color: rgba(255, 255, 255, 0.7);
       }
 
       button.rw:hover {
@@ -162,7 +159,7 @@ class ShadowDOMManager {
       }
 
       button.hideButton {
-        color: rgba(255, 255, 255, 0.45);
+        color: rgba(255, 255, 255, 0.6);
         margin-left: 4px;
       }
 
@@ -270,14 +267,14 @@ class ShadowDOMManager {
    * @returns {Object} Position object with top and left properties
    */
   static calculatePosition(video) {
-    const rect = video.getBoundingClientRect();
-
     // getBoundingClientRect is relative to the viewport; style coordinates
     // are relative to offsetParent, so we adjust for that here. offsetParent
     // can be null if the video has `display: none` or is not yet in the DOM.
-    const offsetRect = video.offsetParent?.getBoundingClientRect();
-    const top = `${Math.max(rect.top - (offsetRect?.top || 0), 0)}px`;
-    const left = `${Math.max(rect.left - (offsetRect?.left || 0), 0)}px`;
+    const offsetParent = video.offsetParent;
+    const rect = video.getBoundingClientRect();
+    const offsetRect = offsetParent ? offsetParent.getBoundingClientRect() : null;
+    const top = `${Math.max(rect.top - (offsetRect ? offsetRect.top : 0), 0)}px`;
+    const left = `${Math.max(rect.left - (offsetRect ? offsetRect.left : 0), 0)}px`;
 
     return { top, left };
   }

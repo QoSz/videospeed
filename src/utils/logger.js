@@ -47,7 +47,9 @@ if (!window.VSC.logger) {
      * @private
      */
     formatVideoId(video) {
-      if (!video) return 'V?';
+      if (!video) {
+        return 'V?';
+      }
       
       const isAudio = video.tagName === 'AUDIO';
       const prefix = isAudio ? 'A' : 'V';
@@ -136,7 +138,9 @@ if (!window.VSC.logger) {
      * @param {string} message - Error message
      */
     error(message) {
-      this.log(message, window.VSC.Constants.LOG_LEVELS.ERROR);
+      if (this.verbosity >= 1) {
+        this.log(message, 1);
+      }
     }
 
     /**
@@ -144,7 +148,9 @@ if (!window.VSC.logger) {
      * @param {string} message - Warning message
      */
     warn(message) {
-      this.log(message, window.VSC.Constants.LOG_LEVELS.WARNING);
+      if (this.verbosity >= 2) {
+        this.log(message, 2);
+      }
     }
 
     /**
@@ -152,7 +158,9 @@ if (!window.VSC.logger) {
      * @param {string} message - Info message
      */
     info(message) {
-      this.log(message, window.VSC.Constants.LOG_LEVELS.INFO);
+      if (this.verbosity >= 3) {
+        this.log(message, 3);
+      }
     }
 
     /**
@@ -160,7 +168,9 @@ if (!window.VSC.logger) {
      * @param {string} message - Debug message
      */
     debug(message) {
-      this.log(message, window.VSC.Constants.LOG_LEVELS.DEBUG);
+      if (this.verbosity >= 4) {
+        this.log(message, 4);
+      }
     }
 
     /**
@@ -168,7 +178,9 @@ if (!window.VSC.logger) {
      * @param {string} message - Verbose debug message
      */
     verbose(message) {
-      this.log(message, window.VSC.Constants.LOG_LEVELS.VERBOSE);
+      if (this.verbosity >= 5) {
+        this.log(message, 5);
+      }
     }
   }
 

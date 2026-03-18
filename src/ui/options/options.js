@@ -498,6 +498,11 @@ document.addEventListener("DOMContentLoaded", async function () {
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       btn.classList.add('active');
       document.querySelector(`.tab-content[data-tab="${btn.dataset.tab}"]`).classList.add('active');
+      // Hide save/restore buttons on Help tab (no editable content)
+      const actionButtons = document.getElementById('action-buttons');
+      if (actionButtons) {
+        actionButtons.style.display = btn.dataset.tab === 'help' ? 'none' : '';
+      }
     });
   });
 

@@ -67,8 +67,10 @@ class VSCStateManager {
     }
 
     // Second pass: clean up disconnected controllers
-    for (const id of disconnectedIds) {
-      this.controllers.delete(id);
+    if (disconnectedIds.length > 0) {
+      for (const id of disconnectedIds) {
+        this.controllers.delete(id);
+      }
     }
 
     return elements;
