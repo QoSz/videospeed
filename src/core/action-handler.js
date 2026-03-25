@@ -20,7 +20,7 @@ class ActionHandler {
   runAction(action, value, e) {
     // Use state manager for complete media discovery (includes shadow DOM)
     const mediaTags = window.VSC.stateManager ?
-      window.VSC.stateManager.getControlledElements() :
+      window.VSC.stateManager.getAllMediaElements() :
       []; // No fallback - state manager should always be available
 
     // Get the controller that was used if called from a button press event
@@ -46,8 +46,6 @@ class ActionHandler {
         return;
       }
 
-      this.eventManager.showController(controller);
-
       if (!v.classList.contains('vsc-cancelled')) {
         this.executeAction(action, value, v, e);
       }
@@ -65,34 +63,30 @@ class ActionHandler {
   executeAction(action, value, video, e) {
     switch (action) {
       case 'rewind':
-        window.VSC.logger.debug('Rewind');
+        this.eventManager.showController(video.vsc.div);
         this.seek(video, -value);
         break;
 
       case 'advance':
-        window.VSC.logger.debug('Fast forward');
+        this.eventManager.showController(video.vsc.div);
         this.seek(video, value);
         break;
 
       case 'faster': {
-        window.VSC.logger.debug('Increase speed');
         this.adjustSpeed(video, value, { relative: true });
         break;
       }
 
       case 'slower': {
-        window.VSC.logger.debug('Decrease speed');
         this.adjustSpeed(video, -value, { relative: true });
         break;
       }
 
       case 'reset':
-        window.VSC.logger.debug('Reset speed');
         this.resetSpeed(video, value);
         break;
 
       case 'display': {
-        window.VSC.logger.debug('Display action triggered');
         const controller = video.vsc.div;
 
         if (!controller) {
@@ -119,13 +113,11 @@ class ActionHandler {
         // Remove vsc-show class immediately when manually hiding
         if (controller.classList.contains('vsc-hidden')) {
           controller.classList.remove('vsc-show');
-          window.VSC.logger.debug('Removed vsc-show class for immediate manual hide');
         }
         break;
       }
 
       case 'blink':
-        window.VSC.logger.debug('Showing controller momentarily');
         this.blinkController(video.vsc.div, value, video);
         break;
 
@@ -138,26 +130,32 @@ class ActionHandler {
         break;
 
       case 'pause':
+        this.eventManager.showController(video.vsc.div);
         this.pause(video);
         break;
 
       case 'muted':
+        this.eventManager.showController(video.vsc.div);
         this.muted(video);
         break;
 
       case 'louder':
+        this.eventManager.showController(video.vsc.div);
         this.volumeUp(video, value);
         break;
 
       case 'softer':
+        this.eventManager.showController(video.vsc.div);
         this.volumeDown(video, value);
         break;
 
       case 'mark':
+        this.eventManager.showController(video.vsc.div);
         this.setMark(video);
         break;
 
       case 'jump':
+        this.eventManager.showController(video.vsc.div);
         this.jumpToMark(video);
         break;
 
@@ -213,11 +211,6 @@ class ActionHandler {
    * @param {number} target - Target speed (usually 1.0)
    */
   resetSpeed(video, target) {
-    // Show controller for visual feedback (will be shown by adjustSpeed but we can show it early)
-    if (video.vsc?.div && this.eventManager) {
-      this.eventManager.showController(video.vsc.div);
-    }
-
     if (!video.vsc) {
       window.VSC.logger.warn('resetSpeed called on video without controller');
       return;
@@ -285,7 +278,7 @@ class ActionHandler {
    */
   jumpToMark(video) {
     window.VSC.logger.debug('Recalling marker');
-    if (video.vsc.mark && typeof video.vsc.mark === 'number') {
+    if (typeof video.vsc.mark === 'number') {
       video.currentTime = video.vsc.mark;
     }
   }
@@ -299,9 +292,7 @@ class ActionHandler {
   blinkController(controller, duration, video) {
     // Don't hide audio controllers after blinking - audio elements are often invisible by design
     // but should maintain visible controllers for user interaction
-    const isAudioController = video
-      ? video.tagName === 'AUDIO'
-      : this.isAudioController(controller);
+    const isAudioController = video.tagName === 'AUDIO';
 
     // Always clear any existing timeout first
     if (controller.blinkTimeOut !== undefined) {
@@ -312,7 +303,6 @@ class ActionHandler {
     // Add vsc-show class to temporarily show controller
     // This overrides vsc-hidden via CSS specificity
     controller.classList.add('vsc-show');
-    window.VSC.logger.debug('Showing controller temporarily with vsc-show class');
 
     // For audio controllers, don't set timeout to hide again
     if (!isAudioController) {
@@ -320,31 +310,10 @@ class ActionHandler {
         () => {
           controller.classList.remove('vsc-show');
           controller.blinkTimeOut = undefined;
-          window.VSC.logger.debug('Removing vsc-show class after timeout');
         },
         duration ? duration : 2500
       );
-    } else {
-      window.VSC.logger.debug('Audio controller blink - keeping vsc-show class');
     }
-  }
-
-  /**
-   * Check if controller is associated with an audio element
-   * @param {HTMLElement} controller - Controller element
-   * @returns {boolean} True if associated with audio element
-   * @private
-   */
-  isAudioController(controller) {
-    // Find associated media element using state manager
-    const mediaElements = window.VSC.stateManager ?
-      window.VSC.stateManager.getControlledElements() : [];
-    for (const media of mediaElements) {
-      if (media.vsc && media.vsc.div === controller) {
-        return media.tagName === 'AUDIO';
-      }
-    }
-    return false;
   }
 
   /**
@@ -358,24 +327,13 @@ class ActionHandler {
    * @param {string} options.source - 'internal' (user action) or 'external' (site/other)
    */
   adjustSpeed(video, value, options = {}) {
-    return window.VSC.logger.withContext(video, () => {
-      const { relative = false, source = 'internal' } = options;
-
-      window.VSC.logger.debug(`adjustSpeed called: value=${value}, relative=${relative}, source=${source}`);
-
-      // Validate input
-      if (!video || !video.vsc) {
-        window.VSC.logger.warn('adjustSpeed called on video without controller');
-        return;
-      }
-
-      if (typeof value !== 'number' || isNaN(value)) {
-        window.VSC.logger.warn('adjustSpeed called with invalid value:', value);
-        return;
-      }
-
-      return this._adjustSpeedInternal(video, value, options);
-    });
+    if (!video || !video.vsc) {
+      return;
+    }
+    if (typeof value !== 'number' || isNaN(value)) {
+      return;
+    }
+    return this._adjustSpeedInternal(video, value, options);
   }
 
   /**
@@ -385,47 +343,26 @@ class ActionHandler {
   _adjustSpeedInternal(video, value, options) {
     const { relative = false, source = 'internal' } = options;
 
-    // Calculate target speed
     let targetSpeed;
     if (relative) {
-      // For relative changes, add to current speed
       const currentSpeed = video.playbackRate < 0.1 ? 0.0 : video.playbackRate;
       targetSpeed = currentSpeed + value;
-      window.VSC.logger.debug(`Relative speed calculation: currentSpeed=${currentSpeed} + ${value} = ${targetSpeed}`);
     } else {
-      // For absolute changes, use value directly
       targetSpeed = value;
-      window.VSC.logger.debug(`Absolute speed set: ${targetSpeed}`);
     }
 
-    // Clamp to valid range
     targetSpeed = Math.min(
       Math.max(targetSpeed, window.VSC.Constants.SPEED_LIMITS.MIN),
       window.VSC.Constants.SPEED_LIMITS.MAX
     );
 
-    // Round to 2 decimal places to avoid floating point issues
     targetSpeed = Number(targetSpeed.toFixed(2));
 
-    // Handle force mode for external changes - restore user preference
     if (source === 'external' && this.config.settings.forceLastSavedSpeed) {
-      // In force mode, use lastSpeed instead of allowing external change
       targetSpeed = this.config.settings.lastSpeed || 1.0;
-      window.VSC.logger.debug(`Force mode: blocking external change, restoring to ${targetSpeed}`);
     }
 
-    // Use the proven setSpeed implementation with source tracking
-    this.setSpeed(video, targetSpeed, source);
-  }
-
-  /**
-   * Get user's preferred speed (always global lastSpeed)
-   * Public method for tests - matches VideoController.getTargetSpeed() logic
-   * @param {HTMLMediaElement} video - Video element (for API compatibility) 
-   * @returns {number} Current preferred speed (always lastSpeed regardless of rememberSpeed setting)
-   */
-  getPreferredSpeed(_video) {
-    return this.config.settings.lastSpeed || 1.0;
+    this.setSpeed(video, targetSpeed);
   }
 
   /**
@@ -433,68 +370,39 @@ class ActionHandler {
    * Unified implementation with all functionality - no fragmented logic
    * @param {HTMLMediaElement} video - Video element
    * @param {number} speed - Target speed
-   * @param {string} source - Change source: 'internal' (user/extension) or 'external' (site)
    */
-  setSpeed(video, speed, source = 'internal') {
-    const speedValue = speed.toFixed(2);
-    const numericSpeed = Number(speedValue);
+  setSpeed(video, speed) {
+    const numericSpeed = Number(speed.toFixed(2));
 
-    // 1. Update lastSpeed FIRST, before triggering any events
-    // This ensures handleRateChange has the correct authoritative value
-    // if a native ratechange event fires before our synthetic one
-    window.VSC.logger.debug(`Updating config.settings.lastSpeed from ${this.config.settings.lastSpeed} to ${numericSpeed}`);
+    // 1. Update lastSpeed
     this.config.settings.lastSpeed = numericSpeed;
 
-    // 2. Start cooldown BEFORE setting playbackRate to prevent race conditions
-    // Native ratechange events fire synchronously when playbackRate changes
+    // 2. Start cooldown before setting playbackRate
     if (this.eventManager) {
       this.eventManager.refreshCoolDown();
     }
 
-    // 3. Update per-video expected speed BEFORE setting playbackRate
-    // This allows EventManager to verify/restore using the video's own expected speed
+    // 3. Update per-video expected speed
     if (video.vsc) {
       video.vsc.expectedSpeed = numericSpeed;
     }
 
-    // 4. Set the actual playback rate (triggers native ratechange event)
+    // 4. Set playback rate
     video.playbackRate = numericSpeed;
 
-    // 5. Dispatch synthetic event with source tracking
-    // This allows EventManager to distinguish our changes from external ones
-    video.dispatchEvent(
-      new CustomEvent('ratechange', {
-        bubbles: true,
-        composed: true,
-        detail: {
-          origin: 'videoSpeed',
-          speed: speedValue,
-          source: source
-        },
-      })
-    );
-
-    // 6. Update UI indicator
+    // 5. Update UI indicator
     const speedIndicator = video.vsc?.speedIndicator;
     if (!speedIndicator) {
-      window.VSC.logger.warn(
-        'Cannot update speed indicator: video controller UI not fully initialized'
-      );
       return;
     }
     speedIndicator.textContent = numericSpeed.toFixed(2);
 
-    // 7. Save to storage ONLY if rememberSpeed is enabled for cross-session persistence
+    // 6. Save to storage if rememberSpeed enabled
     if (this.config.settings.rememberSpeed) {
-      window.VSC.logger.debug(`Saving lastSpeed ${numericSpeed} to Chrome storage`);
-      this.config.save({
-        lastSpeed: this.config.settings.lastSpeed,
-      });
-    } else {
-      window.VSC.logger.debug('NOT saving to storage - rememberSpeed is false');
+      this.config.save({ lastSpeed: numericSpeed });
     }
 
-    // 8. Show controller briefly for visual feedback
+    // 7. Show controller briefly
     if (video.vsc?.div) {
       this.blinkController(video.vsc.div, undefined, video);
     }
