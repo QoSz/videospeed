@@ -41,61 +41,6 @@ class FacebookHandler extends window.VSC.BaseSiteHandler {
   }
 
   /**
-   * Initialize Facebook-specific functionality
-   * @param {Document} document - Document object
-   */
-  initialize(document) {
-    super.initialize(document);
-
-    // Facebook's dynamic content requires special handling
-    this.setupFacebookObserver(document);
-  }
-
-  /**
-   * Set up observer for Facebook's dynamic content loading
-   * @param {Document} document - Document object
-   * @private
-   */
-  setupFacebookObserver(document) {
-    // Facebook loads content dynamically, so we need to watch for new videos
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-          mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-              const videos = node.querySelectorAll && node.querySelectorAll('video');
-              if (videos && videos.length > 0) {
-                window.VSC.logger.debug(`Facebook: Found ${videos.length} new videos`);
-                // Signal that new videos were found
-                this.onNewVideosDetected(Array.from(videos));
-              }
-            }
-          });
-        }
-      });
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-
-    this.facebookObserver = observer;
-    window.VSC.logger.debug('Facebook dynamic content observer set up');
-  }
-
-  /**
-   * Handle new videos detected in Facebook's dynamic content
-   * @param {Array<HTMLMediaElement>} videos - New video elements
-   * @private
-   */
-  onNewVideosDetected(videos) {
-    // This could be used to automatically attach controllers to new videos
-    // For now, just log the detection
-    window.VSC.logger.debug(`Facebook: ${videos.length} new videos detected`);
-  }
-
-  /**
    * Check if video should be ignored on Facebook
    * @param {HTMLMediaElement} video - Video element
    * @returns {boolean} True if video should be ignored
@@ -117,17 +62,6 @@ class FacebookHandler extends window.VSC.BaseSiteHandler {
     return ['[data-video-id]', '.video-container', '.fbStoryVideoContainer', '[role="main"] video'];
   }
 
-  /**
-   * Cleanup Facebook-specific resources
-   */
-  cleanup() {
-    super.cleanup();
-
-    if (this.facebookObserver) {
-      this.facebookObserver.disconnect();
-      this.facebookObserver = null;
-    }
-  }
 }
 
 // Create singleton instance

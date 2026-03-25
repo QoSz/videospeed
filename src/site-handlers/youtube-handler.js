@@ -36,19 +36,6 @@ class YouTubeHandler extends window.VSC.BaseSiteHandler {
    */
   initialize(document) {
     super.initialize(document);
-
-    // Set up YouTube-specific CSS handling
-    this.setupYouTubeCSS();
-  }
-
-  /**
-   * Set up YouTube-specific CSS classes and positioning
-   * @private
-   */
-  setupYouTubeCSS() {
-    // YouTube has complex CSS that can hide our controller
-    // The inject.css already handles this, but we could add dynamic adjustments here
-    window.VSC.logger.debug('YouTube CSS setup completed');
   }
 
   /**
@@ -101,15 +88,6 @@ class YouTubeHandler extends window.VSC.BaseSiteHandler {
     return videos;
   }
 
-  /**
-   * Handle YouTube-specific player state changes
-   * @param {HTMLMediaElement} video - Video element
-   */
-  onPlayerStateChange(_video) {
-    // YouTube fires custom events we could listen to
-    // This could be used for better integration with YouTube's player
-    window.VSC.logger.debug('YouTube player state changed');
-  }
 }
 
 // Create singleton instance
