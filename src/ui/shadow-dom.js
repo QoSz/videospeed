@@ -110,6 +110,7 @@ class ShadowDOMManager {
 
       #controller.dragging {
         cursor: grabbing;
+        will-change: transform;
       }
 
       #controller.dragging #controls {
@@ -192,7 +193,6 @@ class ShadowDOMManager {
     }
 
     // Set per-controller CSS custom properties on host element
-    wrapper.style.setProperty('--vsc-opacity', opacity);
     wrapper.style.setProperty('--vsc-button-size', `${buttonSize}px`);
 
     // Create controller div

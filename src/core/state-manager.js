@@ -53,7 +53,7 @@ class VSCStateManager {
    */
   getAllMediaElements() {
     const elements = [];
-    for (const [_id, info] of this.controllers) {
+    for (const [, info] of this.controllers) {
       const video = info.controller?.video || info.element;
       if (video && video.isConnected) {
         elements.push(video);
@@ -110,10 +110,28 @@ class VSCStateManager {
     return this.controllers.size > 0;
   }
 
+  /**
+   * Start periodic cleanup of disconnected controllers.
+   * Runs every 30 seconds to avoid accumulating stale entries.
+   */
+  startPeriodicCleanup() {
+    if (this._cleanupInterval) return;
+    this._cleanupInterval = setInterval(() => this.cleanupDisconnected(), 30000);
+  }
+
+  /**
+   * Stop periodic cleanup.
+   */
+  stopPeriodicCleanup() {
+    if (this._cleanupInterval) {
+      clearInterval(this._cleanupInterval);
+      this._cleanupInterval = null;
+    }
+  }
+
 }
 
 // Create singleton instance
 window.VSC.StateManager = VSCStateManager;
 window.VSC.stateManager = new VSCStateManager();
-
-window.VSC.logger?.info('State Manager module loaded');
+window.VSC.stateManager.startPeriodicCleanup();

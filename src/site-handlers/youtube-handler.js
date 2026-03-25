@@ -31,14 +31,6 @@ class YouTubeHandler extends window.VSC.BaseSiteHandler {
   }
 
   /**
-   * Initialize YouTube-specific functionality
-   * @param {Document} document - Document object
-   */
-  initialize(document) {
-    super.initialize(document);
-  }
-
-  /**
    * Check if video should be ignored on YouTube
    * @param {HTMLMediaElement} video - Video element
    * @returns {boolean} True if video should be ignored
