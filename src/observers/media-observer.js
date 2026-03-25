@@ -52,9 +52,6 @@ class MediaElementObserver {
       return !this.siteHandler.shouldIgnoreVideo(media);
     });
 
-    window.VSC.logger.info(
-      `Found ${filteredMedia.length} media elements (${mediaElements.length} total, ${mediaElements.length - filteredMedia.length} filtered out)`
-    );
     return filteredMedia;
   }
 
@@ -71,8 +68,10 @@ class MediaElementObserver {
 
     try {
       // Only do basic DOM query, no shadow DOM traversal
-      const regularMedia = Array.from(document.querySelectorAll(mediaTagSelector));
-      mediaElements.push(...regularMedia);
+      const regularMedia = document.querySelectorAll(mediaTagSelector);
+      for (let i = 0; i < regularMedia.length; i++) {
+        mediaElements.push(regularMedia[i]);
+      }
 
       // Find site-specific media elements (usually lightweight)
       const siteSpecificMedia = this.siteHandler.detectSpecialVideos(document);
@@ -83,9 +82,6 @@ class MediaElementObserver {
         return !this.siteHandler.shouldIgnoreVideo(media);
       });
 
-      window.VSC.logger.info(
-        `Light scan found ${filteredMedia.length} media elements (${mediaElements.length} total, ${mediaElements.length - filteredMedia.length} filtered out)`
-      );
       return filteredMedia;
     } catch (error) {
       window.VSC.logger.error(`Light media scan failed: ${error.message}`);
@@ -102,19 +98,17 @@ class MediaElementObserver {
     const mediaElements = [];
     const frameTags = document.getElementsByTagName('iframe');
 
-    Array.prototype.forEach.call(frameTags, (frame) => {
-      // Ignore frames we don't have permission to access (different origin)
+    for (let i = 0; i < frameTags.length; i++) {
       try {
-        const childDocument = frame.contentDocument;
+        const childDocument = frameTags[i].contentDocument;
         if (childDocument) {
           const iframeMedia = this.scanForMedia(childDocument);
           mediaElements.push(...iframeMedia);
-          window.VSC.logger.debug(`Found ${iframeMedia.length} media elements in iframe`);
         }
       } catch (e) {
-        window.VSC.logger.debug(`Cannot access iframe content (cross-origin): ${e.message}`);
+        // Cross-origin iframe, ignore
       }
-    });
+    }
 
     return mediaElements;
   }
@@ -167,7 +161,6 @@ class MediaElementObserver {
     // Remove duplicates
     const uniqueMedia = [...new Set(allMedia)];
 
-    window.VSC.logger.info(`Total unique media elements found: ${uniqueMedia.length}`);
     return uniqueMedia;
   }
 
@@ -179,19 +172,16 @@ class MediaElementObserver {
   isValidMediaElement(media) {
     // Skip videos that are not in the DOM
     if (!media.isConnected) {
-      window.VSC.logger.debug('Video not in DOM');
       return false;
     }
 
     // Skip audio elements when audio support is disabled
     if (media.tagName === 'AUDIO' && !this.config.settings.audioBoolean) {
-      window.VSC.logger.debug('Audio element rejected - audioBoolean disabled');
       return false;
     }
 
     // Let site handler have final say on whether to ignore this video
     if (this.siteHandler.shouldIgnoreVideo(media)) {
-      window.VSC.logger.debug('Video ignored by site handler');
       return false;
     }
 
