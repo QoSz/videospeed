@@ -162,64 +162,40 @@ class EventManager {
    */
   handleRateChange(event) {
     if (this.coolDownActive) {
-      // During cooldown, verify the video's actual speed matches its expected speed.
-      // Use the PER-VIDEO expected speed (not global lastSpeed) to avoid cross-video contamination.
-      // This handles edge cases where stopImmediatePropagation doesn't fully prevent external changes.
       const video = event.composedPath ? event.composedPath()[0] : event.target;
 
       if (video && video.vsc && video.vsc.expectedSpeed !== null) {
         const expectedSpeed = video.vsc.expectedSpeed;
-        const actualSpeed = video.playbackRate;
-
-        // If there's a mismatch, restore the per-video expected speed
-        if (Math.abs(actualSpeed - expectedSpeed) > 0.001) {
-          window.VSC.logger.debug(
-            `Cooldown: speed drift detected (expected=${expectedSpeed}, actual=${actualSpeed}), restoring`
-          );
+        if (Math.abs(video.playbackRate - expectedSpeed) > 0.001) {
           video.playbackRate = expectedSpeed;
         }
       }
 
-      window.VSC.logger.debug('Rate change event blocked by cooldown');
       event.stopImmediatePropagation();
       return;
     }
 
-    // Get the actual video element (handle shadow DOM)
     const video = event.composedPath ? event.composedPath()[0] : event.target;
 
-    // Skip if no VSC controller attached
     if (!video.vsc) {
-      window.VSC.logger.debug('Skipping ratechange - no VSC controller attached');
       return;
     }
 
-    // Force last saved speed mode - restore authoritative speed for ANY external change
     if (this.config.settings.forceLastSavedSpeed) {
       const authoritativeSpeed = this.config.settings.lastSpeed || 1.0;
-      window.VSC.logger.info(`Force mode: restoring external ${video.playbackRate} to authoritative ${authoritativeSpeed}`);
       video.playbackRate = authoritativeSpeed;
       event.stopImmediatePropagation();
       return;
     }
 
-    // Ignore external ratechanges during video initialization
     if (video.readyState < 1) {
-      window.VSC.logger.debug('Ignoring external ratechange during video initialization (readyState < 1)');
       event.stopImmediatePropagation();
       return;
     }
 
-    // External change - use adjustSpeed with external source
     const rawExternalRate = typeof video.playbackRate === 'number' ? video.playbackRate : NaN;
-
-    // Ignore spurious external ratechanges below our supported MIN to avoid persisting clamped 0.07
     const min = window.VSC.Constants.SPEED_LIMITS.MIN;
-    // Use <= to also catch values that Chrome already clamped to MIN (e.g., site set 0)
     if (!isNaN(rawExternalRate) && rawExternalRate <= min) {
-      window.VSC.logger.debug(
-        `Ignoring external ratechange below MIN: raw=${rawExternalRate}, MIN=${min}`
-      );
       event.stopImmediatePropagation();
       return;
     }
@@ -230,7 +206,6 @@ class EventManager {
       });
     }
 
-    // Always stop propagation to prevent loops
     event.stopImmediatePropagation();
   }
 
