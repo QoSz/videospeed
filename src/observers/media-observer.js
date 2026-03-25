@@ -8,6 +8,8 @@ class MediaElementObserver {
   constructor(config, siteHandler) {
     this.config = config;
     this.siteHandler = siteHandler;
+    // Set by inject.js after mutation observer is created
+    this.mutationObserver = null;
   }
 
   /**
@@ -26,24 +28,20 @@ class MediaElementObserver {
       mediaElements.push(regularMedia[i]);
     }
 
-    // Find media elements in shadow DOMs recursively
-    // Only check elements that can have shadow roots (skip the document-level query
-    // since we already found regular media above)
-    function findShadowMedia(root, selector) {
-      const allElements = root.querySelectorAll('*');
-      for (let i = 0; i < allElements.length; i++) {
-        const sr = allElements[i].shadowRoot;
-        if (sr) {
-          const matches = sr.querySelectorAll(selector);
-          for (let j = 0; j < matches.length; j++) {
-            mediaElements.push(matches[j]);
-          }
-          findShadowMedia(sr, selector);
+    // Search shadow DOMs for media elements.
+    // Prefer known shadow roots from mutation observer (O(k) where k = shadow roots)
+    // over full-DOM scan with querySelectorAll('*') (O(n) where n = all elements).
+    if (this.mutationObserver) {
+      for (const shadowRoot of this.mutationObserver.getKnownShadowRoots()) {
+        const matches = shadowRoot.querySelectorAll(mediaTagSelector);
+        for (let j = 0; j < matches.length; j++) {
+          mediaElements.push(matches[j]);
         }
       }
+    } else {
+      // Fallback: recursive shadow DOM traversal when mutation observer not available
+      window.VSC.DomUtils.findShadowMedia(document, mediaTagSelector, mediaElements);
     }
-
-    findShadowMedia(document, mediaTagSelector);
 
     // Find site-specific media elements
     const siteSpecificMedia = this.siteHandler.detectSpecialVideos(document);
@@ -208,36 +206,22 @@ class MediaElementObserver {
    * @returns {boolean} True if controller should start hidden
    */
   shouldStartHidden(media) {
-    // For audio elements, only hide controller if audio support is disabled
-    // Audio players are often intentionally invisible but still functional
     if (media.tagName === 'AUDIO') {
       if (!this.config.settings.audioBoolean) {
-        window.VSC.logger.debug('Audio controller hidden - audio support disabled');
         return true;
       }
-
-      // Audio elements can be functional even when invisible
-      // Only hide if the audio element is explicitly disabled or has no functionality
       if (media.disabled || media.style.pointerEvents === 'none') {
-        window.VSC.logger.debug('Audio controller hidden - element disabled or no pointer events');
         return true;
       }
-
-      // Keep audio controllers visible even for hidden audio elements
-      window.VSC.logger.debug(
-        'Audio controller will start visible (audio elements can be invisible but functional)'
-      );
       return false;
     }
 
-    // For video elements, check visibility - only hide controllers for truly invisible media elements
-    const style = window.getComputedStyle(media);
+    // Check inline style (no reflow) - CSS-hidden elements will be caught by IntersectionObserver later
+    const style = media.style;
     if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
-      window.VSC.logger.debug('Video not visible, controller will start hidden');
       return true;
     }
 
-    // All visible media elements get visible controllers regardless of size
     return false;
   }
 
