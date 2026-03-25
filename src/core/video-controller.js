@@ -70,6 +70,9 @@ class VideoController {
     // Set up mutation observer for src changes
     this.setupMutationObserver();
 
+    // Set up intersection observer for efficient visibility tracking
+    this.setupIntersectionObserver();
+
     window.VSC.logger.info('VideoController initialized for video element');
   }
 
@@ -94,11 +97,10 @@ class VideoController {
 
   /**
    * Get target speed based on rememberSpeed setting and update reset binding
-   * @param {HTMLMediaElement} media - Optional media element (defaults to this.video)
    * @returns {number} Target speed
    * @private
    */
-  getTargetSpeed(_media = this.video) {
+  getTargetSpeed() {
     // Always start with current preferred speed (lastSpeed)
     // The difference is whether changes get saved back to lastSpeed
     const targetSpeed = this.config.settings.lastSpeed || 1.0;
@@ -277,6 +279,12 @@ class VideoController {
   remove() {
     window.VSC.logger.debug('Removing VideoController');
 
+    // Clear any pending blink timer to prevent leaked references to detached shadow DOM
+    if (this.div && this.div.blinkTimeOut !== undefined) {
+      clearTimeout(this.div.blinkTimeOut);
+      this.div.blinkTimeOut = undefined;
+    }
+
     // Remove DOM element
     if (this.div && this.div.parentNode) {
       this.div.remove();
@@ -287,9 +295,14 @@ class VideoController {
       this.targetObserver.disconnect();
     }
 
+    // Disconnect intersection observer
+    if (this._intersectionObserver) {
+      this._intersectionObserver.disconnect();
+    }
+
     // Remove from state manager
     if (window.VSC.stateManager) {
-      window.VSC.stateManager.removeController(this.controllerId);
+      window.VSC.stateManager.unregisterController(this.controllerId);
     }
 
     // Remove reference from video element
@@ -320,30 +333,45 @@ class VideoController {
   }
 
   /**
+   * Set up IntersectionObserver for zero-cost visibility tracking.
+   * Updates cached visibility state without triggering layout recalculation.
+   * Falls back gracefully in environments without IntersectionObserver (e.g., JSDOM).
+   * @private
+   */
+  setupIntersectionObserver() {
+    // Default to true so visibility checks work without IntersectionObserver
+    this._isIntersecting = true;
+    this._intersectionObserver = null;
+
+    if (typeof IntersectionObserver !== 'undefined') {
+      this._isIntersecting = false;
+      this._intersectionObserver = new IntersectionObserver(
+        (entries) => {
+          this._isIntersecting = entries[0].isIntersecting;
+        },
+        { threshold: 0 }
+      );
+      this._intersectionObserver.observe(this.video);
+    }
+  }
+
+  /**
    * Check if the video element is currently visible
    * @returns {boolean} True if video is visible
    */
   isVideoVisible() {
-    // Check if video is still connected to DOM
     if (!this.video.isConnected) {
       return false;
     }
 
-    // Check dimensions first (cheaper than getComputedStyle - only triggers layout, not style recalc)
-    const rect = this.video.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) {
+    // Use cached IntersectionObserver state (zero layout cost)
+    if (!this._isIntersecting) {
       return false;
     }
 
-    // Check inline style first (free - no reflow) before falling back to getComputedStyle
+    // Check inline style (free - no reflow)
     const inlineStyle = this.video.style;
     if (inlineStyle.display === 'none' || inlineStyle.visibility === 'hidden' || inlineStyle.opacity === '0') {
-      return false;
-    }
-
-    // Only call getComputedStyle if inline style doesn't definitively answer
-    const style = window.getComputedStyle(this.video);
-    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
       return false;
     }
 
