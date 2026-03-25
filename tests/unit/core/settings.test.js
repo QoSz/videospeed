@@ -76,7 +76,7 @@ runner.test('VideoSpeedConfig should have state manager available', () => {
   assert.exists(window.VSC.stateManager, 'State manager should be available');
   assert.equal(typeof window.VSC.stateManager.getAllMediaElements, 'function', 'State manager should have getAllMediaElements method');
   assert.equal(typeof window.VSC.stateManager.registerController, 'function', 'State manager should have registerController method');
-  assert.equal(typeof window.VSC.stateManager.removeController, 'function', 'State manager should have removeController method');
+  assert.equal(typeof window.VSC.stateManager.unregisterController, 'function', 'State manager should have unregisterController method');
 });
 
 runner.test('VideoSpeedConfig should handle invalid key binding requests gracefully', () => {

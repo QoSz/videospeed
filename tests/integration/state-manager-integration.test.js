@@ -29,7 +29,7 @@ function setupPostMessageMock() {
   const messages = [];
   const originalPostMessage = window.postMessage;
 
-  window.postMessage = function (message, origin) {
+  window.postMessage = function (message, _origin) {
     if (message && message.source === 'vsc-page' && message.action === 'runtime-message') {
       messages.push(message.data);
     }
@@ -144,8 +144,8 @@ runner.test('StateManager getAllMediaElements includes all tracked videos', asyn
   assert.true(allMedia.includes(mockVideo1), 'Should include first video');
   assert.true(allMedia.includes(mockVideo2), 'Should include second video');
 
-  // Test: getControlledElements returns only videos with controllers
-  const controlledMedia = window.VSC.stateManager.getControlledElements();
+  // Test: getAllMediaElements returns only videos with controllers
+  const controlledMedia = window.VSC.stateManager.getAllMediaElements();
   assert.equal(controlledMedia.length, 2, 'Should return all controlled elements');
   assert.true(controlledMedia.every(v => v.vsc), 'All returned elements should have vsc property');
 
@@ -172,8 +172,8 @@ runner.test('StateManager handles disconnected elements gracefully', async () =>
   document.body.appendChild(parent);
   parent.appendChild(mockVideo);
 
-  // Create controller
-  const controller = new window.VSC.VideoController(mockVideo, parent, config, actionHandler);
+  // Create controller (side-effect: registers with state manager)
+  new window.VSC.VideoController(mockVideo, parent, config, actionHandler);
 
   // Verify controller is tracked
   assert.equal(window.VSC.stateManager.controllers.size, 1, 'Controller should be registered');

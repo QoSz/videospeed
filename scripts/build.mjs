@@ -8,11 +8,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const isWatch = process.argv.includes('--watch');
+const isDev = isWatch || process.argv.includes('--dev');
 
 const common = {
   bundle: true,
-  sourcemap: false,  // set true locally if debugging
-  minify: false,
+  sourcemap: isDev,
+  minify: !isDev,
   target: 'chrome114',
   platform: 'browser',
   legalComments: 'none',

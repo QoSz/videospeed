@@ -75,6 +75,8 @@ Object.assign(global, {
   MutationObserver: dom.window.MutationObserver,
   customElements: dom.window.customElements,
   requestIdleCallback: (fn) => setTimeout(fn, 0),
+  requestAnimationFrame: (fn) => setTimeout(fn, 0),
+  cancelAnimationFrame: (id) => clearTimeout(id),
   location: { hostname: 'localhost', href: 'http://localhost' }
 });
 
@@ -142,13 +144,30 @@ async function runTests() {
       'unit/content/hydration-fix.test.js',
       'unit/utils/recursive-shadow-dom.test.js',
       'unit/utils/blacklist-regex.test.js',
-      'unit/utils/event-manager.test.js'
+      'unit/utils/event-manager.test.js',
+      'unit/core/storage-manager.test.js',
+      'unit/utils/logger.test.js',
+      'unit/utils/dom-utils-extended.test.js',
+      'unit/site-handlers/site-handler-manager.test.js',
+      'unit/ui/shadow-dom.test.js',
+      'unit/ui/controls.test.js',
+      'unit/ui/drag-handler.test.js',
+      'unit/core/video-controller-edge.test.js',
+      'unit/core/action-handler-edge.test.js',
+      'unit/core/state-manager-edge.test.js',
+      'unit/core/settings-edge.test.js',
+      'unit/utils/event-manager-edge.test.js',
+      'unit/observers/mutation-observer-edge.test.js',
+      'unit/observers/media-observer-edge.test.js'
     ];
   } else if (testType === 'integration') {
     testFiles = [
       'integration/module-integration.test.js',
       'integration/ui-to-storage-flow.test.js',
-      'integration/state-manager-integration.test.js'
+      'integration/state-manager-integration.test.js',
+      'integration/memory-leak.test.js',
+      'integration/stress.test.js',
+      'integration/race-conditions.test.js'
     ];
   } else {
     // Run all tests
@@ -166,9 +185,26 @@ async function runTests() {
       'unit/utils/recursive-shadow-dom.test.js',
       'unit/utils/blacklist-regex.test.js',
       'unit/utils/event-manager.test.js',
+      'unit/core/storage-manager.test.js',
+      'unit/utils/logger.test.js',
+      'unit/utils/dom-utils-extended.test.js',
+      'unit/site-handlers/site-handler-manager.test.js',
+      'unit/ui/shadow-dom.test.js',
+      'unit/ui/controls.test.js',
+      'unit/ui/drag-handler.test.js',
+      'unit/core/video-controller-edge.test.js',
+      'unit/core/action-handler-edge.test.js',
+      'unit/core/state-manager-edge.test.js',
+      'unit/core/settings-edge.test.js',
+      'unit/utils/event-manager-edge.test.js',
+      'unit/observers/mutation-observer-edge.test.js',
+      'unit/observers/media-observer-edge.test.js',
       'integration/module-integration.test.js',
       'integration/ui-to-storage-flow.test.js',
-      'integration/state-manager-integration.test.js'
+      'integration/state-manager-integration.test.js',
+      'integration/memory-leak.test.js',
+      'integration/stress.test.js',
+      'integration/race-conditions.test.js'
     ];
   }
 

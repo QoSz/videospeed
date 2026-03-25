@@ -245,6 +245,30 @@ export const assert = {
       throw new Error(message || `Expected ${expectedStr}, got ${actualStr}`);
     }
   },
+
+  notEqual: (actual, expected, message) => {
+    if (actual === expected) {
+      throw new Error(message || `Expected ${actual} to not equal ${expected}`);
+    }
+  },
+
+  greaterThan: (actual, expected, message) => {
+    if (!(actual > expected)) {
+      throw new Error(message || `Expected ${actual} > ${expected}`);
+    }
+  },
+
+  lessThan: (actual, expected, message) => {
+    if (!(actual < expected)) {
+      throw new Error(message || `Expected ${actual} < ${expected}`);
+    }
+  },
+
+  approximately: (actual, expected, tolerance = 0.01, message) => {
+    if (Math.abs(actual - expected) > tolerance) {
+      throw new Error(message || `Expected ${expected} ± ${tolerance}, got ${actual}`);
+    }
+  },
 };
 
 /**

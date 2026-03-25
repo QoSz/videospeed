@@ -5,12 +5,20 @@
 window.VSC = window.VSC || {};
 
 class DragHandler {
+  static _isDragging = false;
+  static _rafId = null;
+
   /**
    * Handle dragging of video controller
    * @param {HTMLVideoElement} video - Video element
    * @param {MouseEvent} e - Mouse event
    */
   static handleDrag(video, e) {
+    // Prevent concurrent drags from accumulating listeners
+    if (DragHandler._isDragging) {
+      return;
+    }
+
     // Validate required elements exist
     if (!video?.vsc?.div) {
       window.VSC.logger.warn('handleDrag: video controller not found');
@@ -30,45 +38,53 @@ class DragHandler {
       return;
     }
 
-    // Find nearest parent of same size as video parent
-    const parentElement = window.VSC.DomUtils.findVideoParent(controller);
-    if (!parentElement) {
-      window.VSC.logger.warn('handleDrag: parent element not found');
-      return;
-    }
-
+    DragHandler._isDragging = true;
     video.classList.add('vcs-dragging');
     shadowController.classList.add('dragging');
 
-    const initialMouseXY = [e.clientX, e.clientY];
-    const initialControllerXY = [
-      parseInt(shadowController.style.left) || 0,
-      parseInt(shadowController.style.top) || 0,
-    ];
+    const initialMouseX = e.clientX;
+    const initialMouseY = e.clientY;
+    const initialLeft = parseInt(shadowController.style.left) || 0;
+    const initialTop = parseInt(shadowController.style.top) || 0;
+    let lastDx = 0;
+    let lastDy = 0;
 
-    const startDragging = (e) => {
-      const style = shadowController.style;
-      const dx = e.clientX - initialMouseXY[0];
-      const dy = e.clientY - initialMouseXY[1];
+    const onMove = (e) => {
+      lastDx = e.clientX - initialMouseX;
+      lastDy = e.clientY - initialMouseY;
 
-      style.left = `${initialControllerXY[0] + dx}px`;
-      style.top = `${initialControllerXY[1] + dy}px`;
+      if (DragHandler._rafId === null) {
+        DragHandler._rafId = requestAnimationFrame(() => {
+          DragHandler._rafId = null;
+          shadowController.style.transform = `translate(${lastDx}px, ${lastDy}px)`;
+        });
+      }
     };
 
-    const stopDragging = () => {
-      parentElement.removeEventListener('mousemove', startDragging);
-      parentElement.removeEventListener('mouseup', stopDragging);
-      parentElement.removeEventListener('mouseleave', stopDragging);
+    const onStop = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onStop);
+
+      if (DragHandler._rafId !== null) {
+        cancelAnimationFrame(DragHandler._rafId);
+        DragHandler._rafId = null;
+      }
+
+      // Commit final position to left/top and clear transform
+      shadowController.style.left = `${initialLeft + lastDx}px`;
+      shadowController.style.top = `${initialTop + lastDy}px`;
+      shadowController.style.transform = '';
 
       shadowController.classList.remove('dragging');
       video.classList.remove('vcs-dragging');
+      DragHandler._isDragging = false;
 
       window.VSC.logger.debug('Drag operation completed');
     };
 
-    parentElement.addEventListener('mouseup', stopDragging);
-    parentElement.addEventListener('mouseleave', stopDragging);
-    parentElement.addEventListener('mousemove', startDragging);
+    // Attach to window so drag works even when cursor leaves the video area
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onStop);
 
     window.VSC.logger.debug('Drag operation started');
   }

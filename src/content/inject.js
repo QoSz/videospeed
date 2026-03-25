@@ -220,6 +220,9 @@ class VideoSpeedExtension {
       (video) => this.onVideoRemoved(video),
       this.mediaObserver
     );
+
+    // Link media observer to mutation observer for shadow root discovery
+    this.mediaObserver.mutationObserver = this.mutationObserver;
   }
 
   /**

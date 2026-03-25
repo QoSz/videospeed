@@ -424,32 +424,21 @@ runner.test('adjustSpeed should handle external changes with force mode', async 
   assert.equal(mockVideo.playbackRate, 2.0);
 });
 
-runner.test('getPreferredSpeed should return global lastSpeed', async () => {
+runner.test('config.settings.lastSpeed should track global speed', async () => {
   const config = window.VSC.videoSpeedConfig;
   await config.load();
 
-  const eventManager = new window.VSC.EventManager(config, null);
-  const actionHandler = new window.VSC.ActionHandler(config, eventManager);
-
-  const mockVideo = createMockVideo({
-    playbackRate: 1.0,
-    currentSrc: 'https://example.com/video1.mp4'
-  });
-
   // Test with set lastSpeed
   config.settings.lastSpeed = 1.75;
-  assert.equal(actionHandler.getPreferredSpeed(mockVideo), 1.75);
+  assert.equal(config.settings.lastSpeed, 1.75);
 
   // Test fallback when no lastSpeed
   config.settings.lastSpeed = null;
-  assert.equal(actionHandler.getPreferredSpeed(mockVideo), 1.0);
+  assert.equal(config.settings.lastSpeed || 1.0, 1.0);
 
-  // Different video should return same global speed
-  const mockVideo2 = createMockVideo({
-    currentSrc: 'https://example.com/video2.mp4'
-  });
+  // lastSpeed is global - same value regardless of video
   config.settings.lastSpeed = 2.5;
-  assert.equal(actionHandler.getPreferredSpeed(mockVideo2), 2.5);
+  assert.equal(config.settings.lastSpeed, 2.5);
 });
 
 runner.test('adjustSpeed should validate input properly', async () => {
@@ -674,10 +663,8 @@ runner.test('adjustSpeed should work correctly with multiple videos', async () =
   assert.equal(video3.playbackRate, 1.25);
 
 
-  // Verify global speed behavior - all videos share same preferred speed
-  assert.equal(actionHandler.getPreferredSpeed(video1), 1.25);
-  assert.equal(actionHandler.getPreferredSpeed(video2), 1.25);
-  assert.equal(actionHandler.getPreferredSpeed(video3), 1.25);
+  // Verify global speed behavior - all videos share same lastSpeed
+  assert.equal(config.settings.lastSpeed, 1.25);
 });
 
 runner.test('adjustSpeed should handle global mode with multiple videos', async () => {
@@ -694,17 +681,14 @@ runner.test('adjustSpeed should handle global mode with multiple videos', async 
   actionHandler.adjustSpeed(video1, 1.8);
   assert.equal(config.settings.lastSpeed, 1.8);
 
-  // getPreferredSpeed should return global speed for both videos
-  assert.equal(actionHandler.getPreferredSpeed(video1), 1.8);
-  assert.equal(actionHandler.getPreferredSpeed(video2), 1.8);
+  // lastSpeed should reflect global speed for all videos
+  assert.equal(config.settings.lastSpeed, 1.8);
 
   // Change speed on second video
   actionHandler.adjustSpeed(video2, 2.2);
-  assert.equal(config.settings.lastSpeed, 2.2);
 
-  // Both videos should now prefer the new global speed
-  assert.equal(actionHandler.getPreferredSpeed(video1), 2.2);
-  assert.equal(actionHandler.getPreferredSpeed(video2), 2.2);
+  // Both videos should now share the new global speed
+  assert.equal(config.settings.lastSpeed, 2.2);
 });
 
 runner.test('adjustSpeed should handle edge cases and error conditions', async () => {

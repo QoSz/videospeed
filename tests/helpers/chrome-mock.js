@@ -115,3 +115,26 @@ export function resetMockStorage() {
     logLevel: 3,
   });
 }
+
+/**
+ * Simulate chrome.runtime.lastError for storage failure tests
+ * @param {string} message - Error message
+ */
+export function setLastError(message) {
+  chromeMock.runtime.lastError = { message };
+}
+
+/**
+ * Clear chrome.runtime.lastError
+ */
+export function clearLastError() {
+  chromeMock.runtime.lastError = null;
+}
+
+/**
+ * Get current mock storage contents for inspection
+ * @returns {Object} Current mock storage
+ */
+export function getMockStorage() {
+  return { ...mockStorage };
+}

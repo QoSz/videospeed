@@ -114,13 +114,6 @@ class SiteHandlerManager {
     }
   }
 
-  /**
-   * Force refresh of current handler (useful for SPA navigation)
-   */
-  refresh() {
-    this.cleanup();
-    this.currentHandler = null;
-  }
 }
 
 // Create singleton instance

@@ -39,6 +39,10 @@ async function runE2ETests() {
     testFiles = ['settings-injection.e2e.js'];
   } else if (testType === 'display') {
     testFiles = ['display-toggle.e2e.js'];
+  } else if (testType === 'headless') {
+    testFiles = ['headless.e2e.js'];
+  } else if (testType === 'stress') {
+    testFiles = ['stress.e2e.js'];
   } else {
     // Run all tests
     testFiles = [
@@ -46,6 +50,8 @@ async function runE2ETests() {
       'youtube.e2e.js',
       'settings-injection.e2e.js',
       'display-toggle.e2e.js',
+      'stress.e2e.js',
+      'headless.e2e.js',
     ];
   }
 
