@@ -66,8 +66,6 @@ class EventManager {
   handleKeydown(event) {
     const keyCode = event.keyCode;
 
-    window.VSC.logger.verbose(`Processing keydown event: key=${event.key}, keyCode=${keyCode}`);
-
     // Event deduplication - prevent same key event from being processed multiple times
     const eventSignature = `${keyCode}_${event.timeStamp}_${event.type}`;
 
@@ -79,7 +77,6 @@ class EventManager {
 
     // Ignore if following modifier is active
     if (this.hasActiveModifier(event)) {
-      window.VSC.logger.debug(`Keydown event ignored due to active modifier: ${keyCode}`);
       return;
     }
 
@@ -89,14 +86,12 @@ class EventManager {
     }
 
     // Ignore keydown event if no media elements are present
-    const mediaElements = window.VSC.stateManager ?
-      window.VSC.stateManager.getControlledElements() : [];
-    if (!mediaElements.length) {
+    if (!window.VSC.stateManager?.hasControllers()) {
       return false;
     }
 
     // Find matching key binding
-    const keyBinding = this.config.settings.keyBindings.find((item) => item.key === keyCode);
+    const keyBinding = this.config.getKeyBindingByKey(keyCode);
 
     if (keyBinding) {
       this.actionHandler.runAction(keyBinding.action, keyBinding.value, event);
@@ -106,8 +101,6 @@ class EventManager {
         event.preventDefault();
         event.stopPropagation();
       }
-    } else {
-      window.VSC.logger.verbose(`No key binding found for keyCode: ${keyCode}`);
     }
 
     return false;
@@ -121,13 +114,13 @@ class EventManager {
    */
   hasActiveModifier(event) {
     return (
-      !event.getModifierState ||
-      event.getModifierState('Alt') ||
-      event.getModifierState('Control') ||
-      event.getModifierState('Fn') ||
-      event.getModifierState('Meta') ||
-      event.getModifierState('Hyper') ||
-      event.getModifierState('OS')
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      (event.getModifierState &&
+        (event.getModifierState('Fn') ||
+          event.getModifierState('Hyper') ||
+          event.getModifierState('OS')))
     );
   }
 
@@ -201,22 +194,11 @@ class EventManager {
       return;
     }
 
-    // Check if this is our own event
-    if (event.detail && event.detail.origin === 'videoSpeed') {
-      // This is our change, don't process it again
-      window.VSC.logger.debug('Ignoring extension-originated rate change');
-      return;
-    }
-
     // Force last saved speed mode - restore authoritative speed for ANY external change
     if (this.config.settings.forceLastSavedSpeed) {
-      if (event.detail && event.detail.origin === 'videoSpeed') {
-        video.playbackRate = Number(event.detail.speed);
-      } else {
-        const authoritativeSpeed = this.config.settings.lastSpeed || 1.0;
-        window.VSC.logger.info(`Force mode: restoring external ${video.playbackRate} to authoritative ${authoritativeSpeed}`);
-        video.playbackRate = authoritativeSpeed;
-      }
+      const authoritativeSpeed = this.config.settings.lastSpeed || 1.0;
+      window.VSC.logger.info(`Force mode: restoring external ${video.playbackRate} to authoritative ${authoritativeSpeed}`);
+      video.playbackRate = authoritativeSpeed;
       event.stopImmediatePropagation();
       return;
     }
@@ -256,24 +238,16 @@ class EventManager {
    * Start cooldown period to prevent event spam
    */
   refreshCoolDown() {
-    window.VSC.logger.debug('Begin refreshCoolDown');
-
-    // Clear existing timer if any
     if (this.coolDownTimer) {
       clearTimeout(this.coolDownTimer);
-      this.coolDownTimer = null;
     }
 
-    // Activate cooldown
     this.coolDownActive = true;
 
-    // Set timer to deactivate cooldown
     this.coolDownTimer = setTimeout(() => {
       this.coolDownActive = false;
       this.coolDownTimer = null;
     }, EventManager.COOLDOWN_MS);
-
-    window.VSC.logger.debug('End refreshCoolDown');
   }
 
   /**
@@ -281,19 +255,10 @@ class EventManager {
    * @param {Element} controller - Controller element
    */
   showController(controller) {
-    // When startHidden is enabled, only show temporary feedback if the user has
-    // previously interacted with this controller manually (vsc-manual class)
-    // This prevents unwanted controller appearances on pages where user wants them hidden
     if (this.config.settings.startHidden && !controller.classList.contains('vsc-manual')) {
-      window.VSC.logger.info(
-        `Controller respecting startHidden setting - no temporary display (startHidden: ${this.config.settings.startHidden}, manual: ${controller.classList.contains('vsc-manual')})`
-      );
       return;
     }
 
-    window.VSC.logger.info(
-      `Showing controller temporarily (startHidden: ${this.config.settings.startHidden}, manual: ${controller.classList.contains('vsc-manual')})`
-    );
     controller.classList.add('vsc-show');
 
     if (this.timer) {
@@ -303,7 +268,6 @@ class EventManager {
     this.timer = setTimeout(() => {
       controller.classList.remove('vsc-show');
       this.timer = null;
-      window.VSC.logger.debug('Hiding controller');
     }, 2000);
   }
 
