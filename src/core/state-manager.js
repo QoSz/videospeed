@@ -48,32 +48,39 @@ class VSCStateManager {
   }
 
   /**
-   * Get all registered media elements
-   * @returns {Array<HTMLMediaElement>} Array of media elements
+   * Get all registered media elements (hot path - no cleanup)
+   * @returns {Array<HTMLMediaElement>} Array of connected media elements
    */
   getAllMediaElements() {
     const elements = [];
-    const disconnectedIds = [];
-
-    // First pass: collect elements and identify disconnected controllers
-    for (const [id, info] of this.controllers) {
+    for (const [_id, info] of this.controllers) {
       const video = info.controller?.video || info.element;
       if (video && video.isConnected) {
         elements.push(video);
-      } else {
-        // Mark for removal (don't delete during iteration)
+      }
+    }
+    return elements;
+  }
+
+  /**
+   * Remove disconnected controllers. Called periodically, not on every action.
+   */
+  cleanupDisconnected() {
+    const disconnectedIds = [];
+    for (const [id, info] of this.controllers) {
+      const video = info.controller?.video || info.element;
+      if (!video || !video.isConnected) {
         disconnectedIds.push(id);
       }
     }
-
-    // Second pass: clean up disconnected controllers
-    if (disconnectedIds.length > 0) {
-      for (const id of disconnectedIds) {
+    for (const id of disconnectedIds) {
+      const info = this.controllers.get(id);
+      if (info?.controller?.remove) {
+        info.controller.remove();
+      } else {
         this.controllers.delete(id);
       }
     }
-
-    return elements;
   }
 
   /**
@@ -103,21 +110,6 @@ class VSCStateManager {
     return this.controllers.size > 0;
   }
 
-  /**
-   * Compatibility method - same as unregisterController
-   * @param {string} controllerId - ID of controller to remove
-   */
-  removeController(controllerId) {
-    this.unregisterController(controllerId);
-  }
-
-  /**
-   * Compatibility method - same as getAllMediaElements
-   * @returns {Array<HTMLMediaElement>} Array of media elements
-   */
-  getControlledElements() {
-    return this.getAllMediaElements();
-  }
 }
 
 // Create singleton instance
