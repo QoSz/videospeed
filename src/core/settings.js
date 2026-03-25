@@ -11,6 +11,33 @@ if (!window.VSC.VideoSpeedConfig) {
       this.pendingSave = null;
       this.saveTimer = null;
       this.SAVE_DELAY = 1000; // 1 second
+      this._keyBindingsByKey = null; // Lazily built Map<keyCode, binding>
+      this._keyBindingsByAction = null; // Lazily built Map<action, binding>
+    }
+
+    /**
+     * Build lookup maps from keyBindings array. Called lazily on first access.
+     * @private
+     */
+    _buildKeyBindingMaps() {
+      this._keyBindingsByKey = new Map();
+      this._keyBindingsByAction = new Map();
+      for (const binding of this.settings.keyBindings) {
+        this._keyBindingsByKey.set(binding.key, binding);
+        this._keyBindingsByAction.set(binding.action, binding);
+      }
+    }
+
+    /**
+     * Get key binding by keyCode (O(1) lookup)
+     * @param {number} keyCode - Key code
+     * @returns {Object|undefined} Key binding or undefined
+     */
+    getKeyBindingByKey(keyCode) {
+      if (!this._keyBindingsByKey) {
+        this._buildKeyBindingMaps();
+      }
+      return this._keyBindingsByKey.get(keyCode);
     }
 
     /**
@@ -75,6 +102,12 @@ if (!window.VSC.VideoSpeedConfig) {
         // Update in-memory settings immediately
         this.settings = { ...this.settings, ...newSettings };
 
+        // Invalidate lookup maps if keyBindings changed
+        if (newSettings.keyBindings) {
+          this._keyBindingsByKey = null;
+          this._keyBindingsByAction = null;
+        }
+
         // Check if this is a speed-only update that should be debounced
         const keys = Object.keys(newSettings);
         if (keys.length === 1 && keys[0] === 'lastSpeed') {
@@ -122,13 +155,11 @@ if (!window.VSC.VideoSpeedConfig) {
      * @returns {*} Key binding property value
      */
     getKeyBinding(action, property = 'value') {
-      try {
-        const binding = this.settings.keyBindings.find((item) => item.action === action);
-        return binding ? binding[property] : false;
-      } catch (e) {
-        window.VSC.logger.error(`Failed to get key binding for ${action}: ${e.message}`);
-        return false;
+      if (!this._keyBindingsByAction) {
+        this._buildKeyBindingMaps();
       }
+      const binding = this._keyBindingsByAction.get(action);
+      return binding ? binding[property] : false;
     }
 
     /**
@@ -153,6 +184,9 @@ if (!window.VSC.VideoSpeedConfig) {
         }
 
         binding.value = value;
+        // Invalidate maps since a binding changed
+        this._keyBindingsByKey = null;
+        this._keyBindingsByAction = null;
         window.VSC.logger.debug(`Updated key binding ${action} to ${value}`);
       } catch (e) {
         window.VSC.logger.error(`Failed to set key binding for ${action}: ${e.message}`);
