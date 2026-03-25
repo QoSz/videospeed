@@ -5,20 +5,37 @@
 window.VSC = window.VSC || {};
 
 class ShadowDOMManager {
+  // Shared CSSStyleSheet instance - created once, adopted by all shadow roots
+  static _sharedSheet = null;
+
+  // Whether adoptedStyleSheets API is available (not in JSDOM)
+  static _supportsAdoptedSheets = typeof CSSStyleSheet !== 'undefined' &&
+    'replaceSync' in CSSStyleSheet.prototype;
+
   /**
-   * Create shadow DOM for video controller
-   * @param {HTMLElement} wrapper - Wrapper element
-   * @param {Object} options - Configuration options
-   * @returns {ShadowRoot} Created shadow root
+   * Get or create the shared stylesheet for all controller shadow roots.
+   * Uses CSS custom properties for per-controller values (opacity, buttonSize).
+   * @returns {CSSStyleSheet|null} Shared stylesheet (null if API unavailable)
+   * @private
    */
-  static createShadowDOM(wrapper, options = {}) {
-    const { top = '0px', left = '0px', speed = '1.00', opacity = 0.3, buttonSize = 14 } = options;
+  static _getSharedSheet() {
+    if (!ShadowDOMManager._supportsAdoptedSheets) {
+      return null;
+    }
+    if (!ShadowDOMManager._sharedSheet) {
+      ShadowDOMManager._sharedSheet = new CSSStyleSheet();
+      ShadowDOMManager._sharedSheet.replaceSync(ShadowDOMManager._getCSS());
+    }
+    return ShadowDOMManager._sharedSheet;
+  }
 
-    const shadow = wrapper.attachShadow({ mode: 'open' });
-
-    // Create style element with embedded CSS for immediate styling
-    const style = document.createElement('style');
-    style.textContent = `
+  /**
+   * Get the CSS string for controller shadow DOMs.
+   * @returns {string} CSS text
+   * @private
+   */
+  static _getCSS() {
+    return `
       * {
         margin: 0;
         padding: 0;
@@ -30,50 +47,37 @@ class ShadowDOMManager {
         position: absolute;
         top: 0;
         left: 0;
-        background: rgba(15, 15, 20, 0.65);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.8);
         color: white;
-        border-radius: 24px;
+        border-radius: 6px;
         padding: 4px 10px;
         margin: 10px 10px 10px 15px;
         cursor: default;
         z-index: 9999999;
         white-space: nowrap;
-        transition: all 0.25s ease;
         display: inline-flex;
         align-items: center;
       }
 
       #controller:hover {
-        background: rgba(15, 15, 20, 0.75);
-        border-color: rgba(255, 255, 255, 0.18);
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+        background: rgba(0, 0, 0, 0.9);
       }
 
       :host(:hover) #controls {
         display: inline-flex;
-        opacity: 1;
       }
 
       :host(.vsc-hidden) #controller,
       :host(.vsc-nosource) #controller {
         display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
       }
 
       :host(.vsc-manual:not(.vsc-hidden)) #controller {
         display: inline-flex !important;
-        visibility: visible !important;
-        opacity: ${opacity} !important;
       }
 
       :host(.vsc-show) #controller {
         display: inline-flex !important;
-        visibility: visible !important;
-        opacity: ${opacity} !important;
       }
 
       .draggable {
@@ -86,7 +90,7 @@ class ShadowDOMManager {
         text-align: center;
         vertical-align: middle;
         font-weight: 700;
-        font-size: ${buttonSize}px;
+        font-size: var(--vsc-button-size, 14px);
         color: rgba(255, 255, 255, 0.9);
         letter-spacing: -0.02em;
       }
@@ -100,10 +104,8 @@ class ShadowDOMManager {
         align-items: center;
         gap: 2px;
         margin-left: 4px;
-        opacity: 0;
-        transition: opacity 0.2s ease;
-        font-size: ${buttonSize}px;
-        line-height: ${buttonSize}px;
+        font-size: var(--vsc-button-size, 14px);
+        line-height: var(--vsc-button-size, 14px);
       }
 
       #controller.dragging {
@@ -112,7 +114,6 @@ class ShadowDOMManager {
 
       #controller.dragging #controls {
         display: inline-flex;
-        opacity: 1;
       }
 
       #controller:hover > .draggable {
@@ -124,13 +125,12 @@ class ShadowDOMManager {
         color: rgba(255, 255, 255, 0.9);
         background: transparent;
         border: none;
-        border-radius: 8px;
+        border-radius: 4px;
         padding: 2px 6px;
         font-size: inherit;
         line-height: inherit;
         font-family: inherit;
         font-weight: 500;
-        transition: all 0.15s ease;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -143,11 +143,11 @@ class ShadowDOMManager {
 
       button:hover {
         color: #fff;
-        background: rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.15);
       }
 
       button:active {
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.25);
       }
 
       button.rw {
@@ -166,8 +166,34 @@ class ShadowDOMManager {
       button.hideButton:hover {
         color: #fff;
       }
-    `;
-    shadow.appendChild(style);
+      `;
+  }
+
+  /**
+   * Create shadow DOM for video controller
+   * @param {HTMLElement} wrapper - Wrapper element
+   * @param {Object} options - Configuration options
+   * @returns {ShadowRoot} Created shadow root
+   */
+  static createShadowDOM(wrapper, options = {}) {
+    const { top = '0px', left = '0px', speed = '1.00', opacity = 0.3, buttonSize = 14 } = options;
+
+    const shadow = wrapper.attachShadow({ mode: 'open' });
+
+    // Use adoptedStyleSheets when available (shared across all controllers),
+    // fall back to inline <style> for environments without support (e.g., JSDOM)
+    const sharedSheet = ShadowDOMManager._getSharedSheet();
+    if (sharedSheet) {
+      shadow.adoptedStyleSheets = [sharedSheet];
+    } else {
+      const style = document.createElement('style');
+      style.textContent = ShadowDOMManager._getCSS();
+      shadow.appendChild(style);
+    }
+
+    // Set per-controller CSS custom properties on host element
+    wrapper.style.setProperty('--vsc-opacity', opacity);
+    wrapper.style.setProperty('--vsc-button-size', `${buttonSize}px`);
 
     // Create controller div
     const controller = document.createElement('div');
@@ -178,22 +204,20 @@ class ShadowDOMManager {
     const draggable = document.createElement('span');
     draggable.setAttribute('data-action', 'drag');
     draggable.className = 'draggable';
-    draggable.style.cssText = `font-size: ${buttonSize}px;`;
     draggable.textContent = speed;
     controller.appendChild(draggable);
 
     // Create controls span
     const controls = document.createElement('span');
     controls.id = 'controls';
-    controls.style.cssText = `font-size: ${buttonSize}px; line-height: ${buttonSize}px;`;
 
     // Create buttons
     const buttons = [
-      { action: 'rewind', text: '«', class: 'rw' },
-      { action: 'slower', text: '−', class: '' },
+      { action: 'rewind', text: '\u00AB', class: 'rw' },
+      { action: 'slower', text: '\u2212', class: '' },
       { action: 'faster', text: '+', class: '' },
-      { action: 'advance', text: '»', class: 'rw' },
-      { action: 'display', text: '×', class: 'hideButton' },
+      { action: 'advance', text: '\u00BB', class: 'rw' },
+      { action: 'display', text: '\u00D7', class: 'hideButton' },
     ];
 
     buttons.forEach((btnConfig) => {
