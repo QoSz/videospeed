@@ -64,16 +64,12 @@ class VideoController {
     // Create UI
     this.div = this.initializeControls();
 
-    // Set up event handlers
-    this.setupEventHandlers();
-
     // Set up mutation observer for src changes
     this.setupMutationObserver();
 
     // Set up intersection observer for efficient visibility tracking
     this.setupIntersectionObserver();
 
-    window.VSC.logger.info('VideoController initialized for video element');
   }
 
   /**
@@ -83,14 +79,11 @@ class VideoController {
   initializeSpeed() {
     const targetSpeed = this.getTargetSpeed();
 
-    window.VSC.logger.debug(`Setting initial playbackRate to: ${targetSpeed}`);
-
     // Set the initial expected speed for this video
     this.expectedSpeed = targetSpeed;
 
     // Use adjustSpeed for initial speed setting to ensure consistency
     if (this.actionHandler && targetSpeed !== this.video.playbackRate) {
-      window.VSC.logger.debug('Setting initial speed via adjustSpeed');
       this.actionHandler.adjustSpeed(this.video, targetSpeed, { source: 'internal' });
     }
   }
@@ -105,16 +98,6 @@ class VideoController {
     // The difference is whether changes get saved back to lastSpeed
     const targetSpeed = this.config.settings.lastSpeed || 1.0;
 
-    if (this.config.settings.rememberSpeed) {
-      window.VSC.logger.debug(
-        `Remember mode: using lastSpeed ${targetSpeed} (changes will be saved)`
-      );
-    } else {
-      window.VSC.logger.debug(
-        `Non-persistent mode: using lastSpeed ${targetSpeed} (changes won't be saved)`
-      );
-    }
-
     return targetSpeed;
   }
 
@@ -124,13 +107,9 @@ class VideoController {
    * @private
    */
   initializeControls() {
-    window.VSC.logger.debug('initializeControls Begin');
-
     const document = this.video.ownerDocument;
     const speed = window.VSC.Constants.formatSpeed(this.video.playbackRate);
     const position = window.VSC.ShadowDOMManager.calculatePosition(this.video);
-
-    window.VSC.logger.debug(`Speed variable set to: ${speed}`);
 
     // Create custom element wrapper to avoid CSS conflicts
     const wrapper = document.createElement('vsc-controller');
@@ -146,7 +125,6 @@ class VideoController {
 
     if (this.config.settings.startHidden || this.shouldStartHidden) {
       cssClasses.push('vsc-hidden');
-      window.VSC.logger.debug('Starting controller hidden');
     }
     // When startHidden=false, use natural visibility (no special class needed)
 
@@ -182,7 +160,6 @@ class VideoController {
     // Insert into DOM based on site-specific rules
     this.insertIntoDOM(document, wrapper);
 
-    window.VSC.logger.debug('initializeControls End');
     return wrapper;
   }
 
@@ -219,31 +196,6 @@ class VideoController {
         positioning.insertionPoint.insertBefore(fragment, positioning.insertionPoint.firstChild);
         break;
     }
-
-    window.VSC.logger.debug(`Controller inserted using ${positioning.insertionMethod} method`);
-  }
-
-  /**
-   * Set up event handlers for media events
-   * @private
-   */
-  setupEventHandlers() {
-    // NOTE: We intentionally do NOT add play/seeked event handlers here.
-    //
-    // Previously, this method added listeners for 'play' and 'seeked' events
-    // that would reset speed to lastSpeed. This caused a bug where:
-    // 1. User sets speed to 1.5x
-    // 2. User switches to another window/app
-    // 3. User returns to the video
-    // 4. Browser/site fires 'play' event (common behavior)
-    // 5. Handler would reset speed, causing unexpected speed changes
-    //
-    // Speed synchronization is now handled entirely by:
-    // - EventManager.handleRateChange() for external speed changes
-    // - forceLastSavedSpeed setting for users who want strict speed enforcement
-    //
-    // This provides better user experience by preserving manual speed changes.
-    window.VSC.logger.debug('setupEventHandlers: no play/seeked handlers (speed managed by ratechange listener)');
   }
 
   /**
