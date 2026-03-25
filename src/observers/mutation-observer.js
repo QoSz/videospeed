@@ -13,6 +13,9 @@ class VideoMutationObserver {
     this.observer = null;
     // Map of shadowRoot → MutationObserver for proper cleanup
     this.shadowObservers = new Map();
+    // Pending visibility rechecks batched into next animation frame
+    this._pendingVisibilityChecks = new Set();
+    this._visibilityRafId = null;
   }
 
   /**
@@ -21,13 +24,7 @@ class VideoMutationObserver {
    */
   start(document) {
     this.observer = new MutationObserver((mutations) => {
-      // Process DOM nodes with reasonable delay
-      requestIdleCallback(
-        () => {
-          this.processMutations(mutations);
-        },
-        { timeout: 2000 }
-      );
+      this.processMutations(mutations);
     });
 
     const observerOptions = {
@@ -87,13 +84,6 @@ class VideoMutationObserver {
       }
       if (processedAdded) {
         processedAdded.add(node);
-      }
-
-      if (node === document.documentElement) {
-        // Document was replaced (e.g., watch.sling.com uses document.write)
-        window.VSC.logger.debug('Document was replaced, reinitializing');
-        this.onDocumentReplaced();
-        continue;
       }
 
       this.checkForVideoAndShadowRoot(node, node.parentNode || mutation.target, true);
@@ -163,12 +153,14 @@ class VideoMutationObserver {
   }
 
   /**
-   * Handle visibility changes on elements that might contain videos
+   * Handle visibility changes on elements that might contain videos.
+   * Batches rechecks into a single requestAnimationFrame to avoid
+   * redundant querySelectorAll when an element's style changes rapidly.
    * @param {Element} element - Element that had style/class changes
    * @private
    */
   handleVisibilityChanges(element) {
-    // If the element itself is a video
+    // If the element itself is a media element, recheck directly (cheap)
     if (
       element.tagName === 'VIDEO' ||
       (element.tagName === 'AUDIO' && this.config.settings.audioBoolean)
@@ -177,18 +169,44 @@ class VideoMutationObserver {
       return;
     }
 
-    // Skip leaf nodes that can't contain media (but check shadow roots too)
+    // Skip leaf nodes that can't contain media
     if ((!element.children || element.children.length === 0) && !element.shadowRoot) {
       return;
     }
 
-    // Check if element contains videos
+    // Batch container checks into next animation frame
+    this._pendingVisibilityChecks.add(element);
+    if (!this._visibilityRafId) {
+      this._visibilityRafId = requestAnimationFrame(() => {
+        this._flushVisibilityChecks();
+      });
+    }
+  }
+
+  /**
+   * Process batched visibility rechecks in a single frame
+   * @private
+   */
+  _flushVisibilityChecks() {
+    this._visibilityRafId = null;
+    const elements = this._pendingVisibilityChecks;
+    this._pendingVisibilityChecks = new Set();
+
     const audioEnabled = this.config.settings.audioBoolean;
     const mediaTagSelector = audioEnabled ? 'video,audio' : 'video';
-    const videos = element.querySelectorAll(mediaTagSelector);
+    const checked = new WeakSet();
 
-    for (let i = 0; i < videos.length; i++) {
-      this.recheckVideoElement(videos[i]);
+    for (const element of elements) {
+      if (!element.isConnected) {
+        continue;
+      }
+      const videos = element.querySelectorAll(mediaTagSelector);
+      for (let i = 0; i < videos.length; i++) {
+        if (!checked.has(videos[i])) {
+          checked.add(videos[i]);
+          this.recheckVideoElement(videos[i]);
+        }
+      }
     }
   }
 
@@ -263,7 +281,16 @@ class VideoMutationObserver {
   processNodeChildren(node, parent, added) {
     // Handle shadow DOM
     if (node.shadowRoot) {
-      this.observeShadowRoot(node.shadowRoot);
+      if (added) {
+        this.observeShadowRoot(node.shadowRoot);
+      } else {
+        // Clean up shadow root observer when host element is removed
+        const observer = this.shadowObservers.get(node.shadowRoot);
+        if (observer) {
+          observer.disconnect();
+          this.shadowObservers.delete(node.shadowRoot);
+        }
+      }
       const shadowChildren = node.shadowRoot.children;
       for (let i = 0; i < shadowChildren.length; i++) {
         this.checkForVideoAndShadowRoot(shadowChildren[i], shadowChildren[i].parentNode || parent, added);
@@ -290,12 +317,7 @@ class VideoMutationObserver {
     }
 
     const shadowObserver = new MutationObserver((mutations) => {
-      requestIdleCallback(
-        () => {
-          this.processMutations(mutations);
-        },
-        { timeout: 500 }
-      );
+      this.processMutations(mutations);
     });
 
     const observerOptions = {
@@ -312,12 +334,13 @@ class VideoMutationObserver {
   }
 
   /**
-   * Handle document replacement
-   * @private
+   * Get all known shadow roots discovered during observation.
+   * Used by MediaElementObserver to search for media in shadow DOMs
+   * without the expensive querySelectorAll('*') full-DOM scan.
+   * @returns {Iterable<ShadowRoot>} Known shadow roots
    */
-  onDocumentReplaced() {
-    // This callback should trigger reinitialization
-    window.VSC.logger.warn('Document replacement detected - full reinitialization needed');
+  getKnownShadowRoots() {
+    return this.shadowObservers.keys();
   }
 
   /**
@@ -334,6 +357,13 @@ class VideoMutationObserver {
       observer.disconnect();
     });
     this.shadowObservers.clear();
+
+    // Cancel any pending visibility recheck
+    if (this._visibilityRafId) {
+      cancelAnimationFrame(this._visibilityRafId);
+      this._visibilityRafId = null;
+    }
+    this._pendingVisibilityChecks.clear();
 
     window.VSC.logger.debug('Video mutation observer stopped');
   }
