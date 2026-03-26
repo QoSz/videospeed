@@ -18,13 +18,15 @@ class MediaElementObserver {
    * @returns {Array<HTMLMediaElement>} Found media elements
    */
   scanForMedia(document) {
+    const seen = new Set();
     const mediaElements = [];
     const audioEnabled = this.config.settings.audioBoolean;
     const mediaTagSelector = audioEnabled ? 'video,audio' : 'video';
 
-    // Find regular media elements
+    // Find regular media elements (querySelectorAll returns no duplicates)
     const regularMedia = document.querySelectorAll(mediaTagSelector);
     for (let i = 0; i < regularMedia.length; i++) {
+      seen.add(regularMedia[i]);
       mediaElements.push(regularMedia[i]);
     }
 
@@ -35,17 +37,32 @@ class MediaElementObserver {
       for (const shadowRoot of this.mutationObserver.getKnownShadowRoots()) {
         const matches = shadowRoot.querySelectorAll(mediaTagSelector);
         for (let j = 0; j < matches.length; j++) {
-          mediaElements.push(matches[j]);
+          if (!seen.has(matches[j])) {
+            seen.add(matches[j]);
+            mediaElements.push(matches[j]);
+          }
         }
       }
     } else {
       // Fallback: recursive shadow DOM traversal when mutation observer not available
-      window.VSC.DomUtils.findShadowMedia(document, mediaTagSelector, mediaElements);
+      const shadowMedia = [];
+      window.VSC.DomUtils.findShadowMedia(document, mediaTagSelector, shadowMedia);
+      for (let i = 0; i < shadowMedia.length; i++) {
+        if (!seen.has(shadowMedia[i])) {
+          seen.add(shadowMedia[i]);
+          mediaElements.push(shadowMedia[i]);
+        }
+      }
     }
 
-    // Find site-specific media elements
+    // Find site-specific media elements, skip duplicates
     const siteSpecificMedia = this.siteHandler.detectSpecialVideos(document);
-    mediaElements.push(...siteSpecificMedia);
+    for (let i = 0; i < siteSpecificMedia.length; i++) {
+      if (!seen.has(siteSpecificMedia[i])) {
+        seen.add(siteSpecificMedia[i]);
+        mediaElements.push(siteSpecificMedia[i]);
+      }
+    }
 
     // Filter out ignored videos
     const filteredMedia = mediaElements.filter((media) => {
@@ -62,6 +79,7 @@ class MediaElementObserver {
    * @returns {Array<HTMLMediaElement>} Found media elements
    */
   scanForMediaLight(document) {
+    const seen = new Set();
     const mediaElements = [];
     const audioEnabled = this.config.settings.audioBoolean;
     const mediaTagSelector = audioEnabled ? 'video,audio' : 'video';
@@ -70,12 +88,18 @@ class MediaElementObserver {
       // Only do basic DOM query, no shadow DOM traversal
       const regularMedia = document.querySelectorAll(mediaTagSelector);
       for (let i = 0; i < regularMedia.length; i++) {
+        seen.add(regularMedia[i]);
         mediaElements.push(regularMedia[i]);
       }
 
-      // Find site-specific media elements (usually lightweight)
+      // Find site-specific media elements, skip duplicates
       const siteSpecificMedia = this.siteHandler.detectSpecialVideos(document);
-      mediaElements.push(...siteSpecificMedia);
+      for (let i = 0; i < siteSpecificMedia.length; i++) {
+        if (!seen.has(siteSpecificMedia[i])) {
+          seen.add(siteSpecificMedia[i]);
+          mediaElements.push(siteSpecificMedia[i]);
+        }
+      }
 
       // Filter out ignored videos
       const filteredMedia = mediaElements.filter((media) => {

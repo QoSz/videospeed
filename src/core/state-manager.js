@@ -115,7 +115,7 @@ class VSCStateManager {
    * Runs every 30 seconds to avoid accumulating stale entries.
    */
   startPeriodicCleanup() {
-    if (this._cleanupInterval) return;
+    if (this._cleanupInterval) {return;}
     this._cleanupInterval = setInterval(() => this.cleanupDisconnected(), 30000);
   }
 

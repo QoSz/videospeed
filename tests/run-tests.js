@@ -158,7 +158,8 @@ async function runTests() {
       'unit/core/settings-edge.test.js',
       'unit/utils/event-manager-edge.test.js',
       'unit/observers/mutation-observer-edge.test.js',
-      'unit/observers/media-observer-edge.test.js'
+      'unit/observers/media-observer-edge.test.js',
+      'unit/bug-regression.test.js'
     ];
   } else if (testType === 'integration') {
     testFiles = [
@@ -199,6 +200,7 @@ async function runTests() {
       'unit/utils/event-manager-edge.test.js',
       'unit/observers/mutation-observer-edge.test.js',
       'unit/observers/media-observer-edge.test.js',
+      'unit/bug-regression.test.js',
       'integration/module-integration.test.js',
       'integration/ui-to-storage-flow.test.js',
       'integration/state-manager-integration.test.js',

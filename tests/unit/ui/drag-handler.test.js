@@ -24,13 +24,27 @@ runner.beforeEach(() => {
   mockDOM = createMockDOM();
   window.VSC.DragHandler._isDragging = false;
   window.VSC.DragHandler._rafId = null;
+  if (window.VSC.DragHandler._dragTimeoutId !== null) {
+    clearTimeout(window.VSC.DragHandler._dragTimeoutId);
+    window.VSC.DragHandler._dragTimeoutId = null;
+  }
+  window.VSC.DragHandler._onMove = null;
+  window.VSC.DragHandler._onStop = null;
 });
 
 runner.afterEach(() => {
   cleanupChromeMock();
-  if (mockDOM) mockDOM.cleanup();
+  if (mockDOM) {
+    mockDOM.cleanup();
+  }
   window.VSC.DragHandler._isDragging = false;
   window.VSC.DragHandler._rafId = null;
+  if (window.VSC.DragHandler._dragTimeoutId !== null) {
+    clearTimeout(window.VSC.DragHandler._dragTimeoutId);
+    window.VSC.DragHandler._dragTimeoutId = null;
+  }
+  window.VSC.DragHandler._onMove = null;
+  window.VSC.DragHandler._onStop = null;
 });
 
 /**
@@ -69,16 +83,16 @@ function createDragSetup() {
   };
 }
 
-runner.test('DragHandler prevents concurrent drags', async () => {
+runner.test('DragHandler force-resets stuck drag then starts fresh', async () => {
   const setup = createDragSetup();
 
-  // Start a drag to set the flag
+  // Simulate a stuck drag state
   window.VSC.DragHandler._isDragging = true;
 
-  // Attempting another drag should return early without error
+  // Calling handleDrag while already dragging should force reset then start a new drag
   window.VSC.DragHandler.handleDrag(setup.video, setup.mockEvent);
 
-  // Flag should still be true (no new drag started)
+  // Flag should be true (new drag started after force reset)
   assert.true(window.VSC.DragHandler._isDragging, 'Should still be dragging');
 
   setup.cleanup();

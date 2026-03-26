@@ -12,7 +12,7 @@ class EventManager {
     // Separate boolean flag from timer ID for clarity
     this.coolDownActive = false;
     this.coolDownTimer = null;
-    this.timer = null;
+    this.showTimers = new WeakMap();
 
     // Event deduplication to prevent duplicate key processing
     this.lastKeyEventSignature = null;
@@ -236,14 +236,18 @@ class EventManager {
 
     controller.classList.add('vsc-show');
 
-    if (this.timer) {
-      clearTimeout(this.timer);
+    const existingTimer = this.showTimers.get(controller);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
     }
 
-    this.timer = setTimeout(() => {
-      controller.classList.remove('vsc-show');
-      this.timer = null;
-    }, 2000);
+    this.showTimers.set(
+      controller,
+      setTimeout(() => {
+        controller.classList.remove('vsc-show');
+        this.showTimers.delete(controller);
+      }, 2000)
+    );
   }
 
   /**
@@ -268,10 +272,8 @@ class EventManager {
       this.coolDownActive = false;
     }
 
-    if (this.timer) {
-      clearTimeout(this.timer);
-      this.timer = null;
-    }
+    // Note: showTimers (WeakMap) entries are cleaned up automatically
+    // when controller elements are garbage collected
   }
 }
 

@@ -29,6 +29,10 @@ class AmazonHandler extends window.VSC.BaseSiteHandler {
     // Only special-case Prime Video, not product-page videos (which use "vjs-tech")
     // Otherwise the overlay disappears in fullscreen mode
     if (!video.classList.contains('vjs-tech')) {
+      if (!parent.parentElement) {
+        return super.getControllerPosition(parent, video);
+      }
+
       return {
         insertionPoint: parent.parentElement,
         insertionMethod: 'beforeParent',

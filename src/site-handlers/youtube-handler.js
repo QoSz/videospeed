@@ -23,6 +23,10 @@ class YouTubeHandler extends window.VSC.BaseSiteHandler {
     // YouTube requires special positioning to ensure controller is on top
     const targetParent = parent.parentElement;
 
+    if (!targetParent) {
+      return super.getControllerPosition(parent, _video);
+    }
+
     return {
       insertionPoint: targetParent,
       insertionMethod: 'firstChild',

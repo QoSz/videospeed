@@ -229,6 +229,9 @@ class VideoController {
    * Remove controller and clean up
    */
   remove() {
+    if (this._removed) {return;}
+    this._removed = true;
+
     window.VSC.logger.debug('Removing VideoController');
 
     // Clear any pending blink timer to prevent leaked references to detached shadow DOM

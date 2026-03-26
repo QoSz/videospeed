@@ -37,7 +37,7 @@ runner.beforeEach(() => {
 
 runner.afterEach(() => {
   cleanupChromeMock();
-  if (mockDOM) mockDOM.cleanup();
+  if (mockDOM) {mockDOM.cleanup();}
   // Reset DragHandler state
   if (window.VSC && window.VSC.DragHandler) {
     window.VSC.DragHandler._isDragging = false;

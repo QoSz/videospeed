@@ -37,7 +37,7 @@ runner.beforeEach(() => {
 
 runner.afterEach(() => {
   cleanupChromeMock();
-  if (mockDOM) mockDOM.cleanup();
+  if (mockDOM) {mockDOM.cleanup();}
   // Clean up video elements
   document
     .querySelectorAll('video, audio, .vsc-controller')

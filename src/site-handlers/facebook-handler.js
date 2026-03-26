@@ -30,7 +30,7 @@ class FacebookHandler extends window.VSC.BaseSiteHandler {
           .parentElement;
     } catch (e) {
       window.VSC.logger.warn('Facebook DOM structure changed, using fallback positioning');
-      targetParent = parent.parentElement;
+      targetParent = parent.parentElement || parent;
     }
 
     return {

@@ -21,6 +21,10 @@ class NetflixHandler extends window.VSC.BaseSiteHandler {
    */
   getControllerPosition(parent, _video) {
     // Insert before parent to bypass Netflix's overlay
+    if (!parent.parentElement) {
+      return super.getControllerPosition(parent, _video);
+    }
+
     return {
       insertionPoint: parent.parentElement,
       insertionMethod: 'beforeParent',

@@ -74,10 +74,10 @@ export default async function runHeadlessE2ETests() {
     await runTest('Shadow DOM renders correctly in headless mode', async () => {
       const shadowDOMInfo = await page.evaluate(() => {
         const controller = document.querySelector('.vsc-controller');
-        if (!controller) return { exists: false };
+        if (!controller) {return { exists: false };}
 
         const shadowRoot = controller.shadowRoot;
-        if (!shadowRoot) return { exists: true, hasShadowRoot: false };
+        if (!shadowRoot) {return { exists: true, hasShadowRoot: false };}
 
         const controllerEl = shadowRoot.querySelector('#controller');
         return {

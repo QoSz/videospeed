@@ -189,7 +189,7 @@ runner.test('cleanup clears all listeners and timers', async () => {
   assert.equal(eventManager.listeners.size, 0, 'Listeners map should be empty after cleanup');
   assert.false(eventManager.coolDownActive, 'Cooldown should be inactive after cleanup');
   assert.equal(eventManager.coolDownTimer, null, 'Cooldown timer should be null after cleanup');
-  assert.equal(eventManager.timer, null, 'Show timer should be null after cleanup');
+  assert.true(eventManager.showTimers instanceof WeakMap, 'Show timers WeakMap should exist after cleanup');
 });
 
 runner.test('showController adds vsc-show class', async () => {

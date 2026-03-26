@@ -225,7 +225,6 @@ class VideoMutationObserver {
       if (!this.mediaObserver.isValidMediaElement(video)) {
         window.VSC.logger.debug('Video became invalid, removing controller');
         video.vsc.remove();
-        video.vsc = null;
       } else {
         // Video is still valid, update visibility based on current state
         video.vsc.updateVisibility();
@@ -321,7 +320,7 @@ class VideoMutationObserver {
     });
 
     const observerOptions = {
-      attributeFilter: ['aria-hidden', 'data-focus-method'],
+      attributeFilter: ['aria-hidden', 'data-focus-method', 'style', 'class'],
       childList: true,
       subtree: true,
     };

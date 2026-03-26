@@ -123,9 +123,9 @@ export default async function runStressE2ETests() {
       // Click the faster button 10 times rapidly using page.evaluate for speed
       const clickResults = await page.evaluate(() => {
         const controller = document.querySelector('.vsc-controller');
-        if (!controller || !controller.shadowRoot) return { clicks: 0, error: 'No controller' };
+        if (!controller || !controller.shadowRoot) {return { clicks: 0, error: 'No controller' };}
         const button = controller.shadowRoot.querySelector('button[data-action="faster"]');
-        if (!button) return { clicks: 0, error: 'No faster button' };
+        if (!button) {return { clicks: 0, error: 'No faster button' };}
         let clicks = 0;
         for (let i = 0; i < 10; i++) {
           button.click();
@@ -145,7 +145,7 @@ export default async function runStressE2ETests() {
       // Verify speed display is accessible via shadow DOM (controller wrapper still in DOM even if hidden)
       const speedDisplay = await page.evaluate(() => {
         const controller = document.querySelector('.vsc-controller');
-        if (!controller || !controller.shadowRoot) return null;
+        if (!controller || !controller.shadowRoot) {return null;}
         const speedElement = controller.shadowRoot.querySelector('.draggable');
         return speedElement ? speedElement.textContent : null;
       });
