@@ -10,6 +10,10 @@ async function init(): Promise<void> {
     // Get settings from chrome.storage - these will be injected for page context
     const settings: Record<string, unknown> = await chrome.storage.sync.get(null);
 
+    // Generate auth nonce for message bridge authentication
+    const authNonce = crypto.randomUUID();
+    settings._vscNonce = authNonce;
+
     // Bridge settings to page context via DOM (only synchronous path between Chrome's isolated worlds)
     // Script elements with type="application/json" are inert, avoiding site interference and CSP issues
     const settingsElement = document.createElement('script');
@@ -22,7 +26,8 @@ async function init(): Promise<void> {
     await injectScript('inject.js');
 
     // Set up bi-directional message bridge for popup <-> page communication
-    setupMessageBridge();
+    // Pass nonce so bridge can verify messages from page context
+    setupMessageBridge(authNonce);
 
     console.debug('[VSC] Content script initialized');
   } catch (error) {

@@ -275,7 +275,7 @@ export class VideoController {
     // Create a simple hash from src for uniqueness
     const srcHash = src.split('').reduce((hash, char) => {
       hash = (hash << 5) - hash + char.charCodeAt(0);
-      return hash & hash; // Convert to 32-bit integer
+      return hash | 0; // Convert to 32-bit integer
     }, 0);
 
     const random = Math.floor(Math.random() * 1000);

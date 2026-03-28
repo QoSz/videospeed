@@ -242,7 +242,6 @@ declare global {
 
     // Runtime state
     initialized: boolean;
-    _authNonce: string;
   }
 
   interface VideoSpeedExtension {

@@ -335,8 +335,8 @@ class VideoSpeedExtension {
           if (message.payload && typeof message.payload.speed === 'number') {
             const targetSpeed = message.payload.speed;
             videos.forEach((video) => {
-              if (video.vsc) {
-                extension.actionHandler!.adjustSpeed(video, targetSpeed);
+              if (video.vsc && extension.actionHandler) {
+                extension.actionHandler.adjustSpeed(video, targetSpeed);
               } else {
                 video.playbackRate = targetSpeed;
               }
@@ -353,8 +353,8 @@ class VideoSpeedExtension {
           if (message.payload && typeof message.payload.delta === 'number') {
             const delta = message.payload.delta;
             videos.forEach((video) => {
-              if (video.vsc) {
-                extension.actionHandler!.adjustSpeed(video, delta, { relative: true });
+              if (video.vsc && extension.actionHandler) {
+                extension.actionHandler.adjustSpeed(video, delta, { relative: true });
               } else {
                 // Fallback for videos without controller
                 const newSpeed = Math.min(Math.max(video.playbackRate + delta, 0.07), 16);
@@ -370,8 +370,8 @@ class VideoSpeedExtension {
 
         case window.VSC.Constants.MESSAGE_TYPES.RESET_SPEED:
           videos.forEach((video) => {
-            if (video.vsc) {
-              extension.actionHandler!.resetSpeed(video, 1.0);
+            if (video.vsc && extension.actionHandler) {
+              extension.actionHandler.resetSpeed(video, 1.0);
             } else {
               video.playbackRate = 1.0;
             }

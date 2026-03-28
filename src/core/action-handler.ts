@@ -304,7 +304,7 @@ class ActionHandler {
           controller.classList.remove('vsc-show');
           controller.blinkTimeOut = undefined;
         },
-        duration ? duration : 2500
+        duration ?? 2500
       );
     }
   }

@@ -11,7 +11,9 @@ window.addEventListener(
       event.origin !== 'https://www.netflix.com' ||
       !data ||
       data.action !== 'videospeed-seek' ||
-      !data.seekMs
+      typeof data.seekMs !== 'number' ||
+      !Number.isFinite(data.seekMs) ||
+      Math.abs(data.seekMs) > 86400000
     ) {
       return;
     }

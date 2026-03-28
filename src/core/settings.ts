@@ -298,7 +298,8 @@ export class VideoSpeedConfig {
       ) {
         continue;
       }
-      if (typeof entry.value !== 'number' || !Number.isFinite(entry.value)) {
+      if (typeof entry.value !== 'number' || !Number.isFinite(entry.value) ||
+          entry.value < -3600 || entry.value > 3600) {
         continue;
       }
       // Normalize boolean fields

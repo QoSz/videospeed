@@ -32,6 +32,9 @@ function hasChromeStorage(): boolean {
   );
 }
 
+// Closure-scoped nonce — not on window.VSC where page scripts could read it
+let _authNonce: string | undefined;
+
 export class StorageManager {
   static errorCallback: ErrorCallback | null = null;
 
@@ -66,9 +69,9 @@ export class StorageManager {
       if (settingsElement && settingsElement.textContent) {
         try {
           const parsed: Record<string, unknown> = JSON.parse(settingsElement.textContent);
-          // Extract auth nonce for message authentication, then remove from settings
+          // Extract auth nonce into closure-scoped variable (not on window.VSC)
           if (typeof parsed._vscNonce === 'string') {
-            window.VSC._authNonce = parsed._vscNonce;
+            _authNonce = parsed._vscNonce;
             delete parsed._vscNonce;
           }
           window.VSC_settings = parsed;
@@ -126,10 +129,10 @@ export class StorageManager {
     const message: StorageUpdateMessage = {
       source: 'vsc-page',
       action: 'storage-update',
-      nonce: window.VSC._authNonce,
+      nonce: _authNonce,
       data: data,
     };
-    window.postMessage(message, '*');
+    window.postMessage(message, window.location.origin);
 
     // Update local settings cache
     window.VSC_settings = { ...window.VSC_settings, ...data };

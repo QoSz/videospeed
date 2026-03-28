@@ -243,11 +243,22 @@ export function findShadowMedia(
       collected.push(matches[i] as HTMLMediaElement);
     }
 
-    const allElements = root.querySelectorAll('*');
-    for (let i = 0; i < allElements.length; i++) {
-      const el = allElements[i];
-      if (el && el.shadowRoot) {
-        findShadowMedia(el.shadowRoot, selector, collected);
+    // Walk the tree iteratively instead of querySelectorAll('*') to avoid
+    // creating a NodeList of every element in the subtree
+    const stack: Element[] = [];
+    let child = root.firstElementChild;
+    while (child) {
+      if (child.shadowRoot) {
+        findShadowMedia(child.shadowRoot, selector, collected);
+      }
+      if (child.firstElementChild) {
+        stack.push(child);
+        child = child.firstElementChild;
+      } else {
+        child = child.nextElementSibling;
+        while (!child && stack.length > 0) {
+          child = stack.pop()!.nextElementSibling;
+        }
       }
     }
   }

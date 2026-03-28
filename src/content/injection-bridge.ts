@@ -38,7 +38,10 @@ export function injectScript(scriptPath: string): Promise<void> {
  * Set up message bridge between content script and page context
  * Handles bi-directional communication for popup and settings updates
  */
-export function setupMessageBridge(): void {
+export function setupMessageBridge(authNonce: string): void {
+  // Determine safe target origin — file:// returns 'null' which breaks postMessage
+  const targetOrigin = window.location.origin !== 'null' ? window.location.origin : '*';
+
   // Listen for messages from the page context (injected script)
   window.addEventListener('message', (event: MessageEvent<VSCBridgeMessage>) => {
     if (event.source !== window || !event.data?.source?.startsWith('vsc-')) {
@@ -48,6 +51,12 @@ export function setupMessageBridge(): void {
     const { source, action, data } = event.data;
 
     if (source === 'vsc-page') {
+      // Validate nonce on all operations from page context
+      const nonce = (event.data as unknown as Record<string, unknown>).nonce;
+      if (nonce !== authNonce) {
+        return;
+      }
+
       // Forward page messages to extension runtime
       if (action === 'storage-update') {
         chrome.storage.sync.set(data);
@@ -66,7 +75,7 @@ export function setupMessageBridge(): void {
               action: 'storage-data',
               data: items,
             },
-            '*'
+            targetOrigin
           );
         });
       }
@@ -93,7 +102,8 @@ export function setupMessageBridge(): void {
         const responseHandler = (event: MessageEvent<VSCBridgeMessage>): void => {
           if (
             event.data?.source === 'vsc-page' &&
-            event.data?.action === 'status-response'
+            event.data?.action === 'status-response' &&
+            (event.data as unknown as Record<string, unknown>).nonce === authNonce
           ) {
             clearTimeout(timeoutId);
             window.removeEventListener('message', responseHandler);
@@ -125,7 +135,7 @@ export function setupMessageBridge(): void {
             action: 'storage-changed',
             data: changedData,
           },
-          '*'
+          window.location.origin
         );
       }
     }
