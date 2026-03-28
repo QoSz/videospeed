@@ -4,7 +4,7 @@
  */
 
 import { installChromeMock, cleanupChromeMock, resetMockStorage } from '../../helpers/chrome-mock.js';
-import { SimpleTestRunner, assert, createMockVideo, createMockDOM } from '../../helpers/test-utils.js';
+import { SimpleTestRunner, assert, createMockVideo as _createMockVideo, createMockDOM } from '../../helpers/test-utils.js';
 import { loadInjectModules } from '../../helpers/module-loader.js';
 
 // Load all required modules

@@ -9,40 +9,40 @@
  */
 export async function loadCoreModules() {
   // Core utilities (order matters due to dependencies)
-  await import('../../src/utils/constants.js');
-  await import('../../src/utils/logger.js');
-  await import('../../src/utils/dom-utils.js');
-  await import('../../src/utils/event-manager.js');
+  await import('../../src/utils/constants.ts');
+  await import('../../src/utils/logger.ts');
+  await import('../../src/utils/dom-utils.ts');
+  await import('../../src/utils/event-manager.ts');
 
   // Storage and settings
-  await import('../../src/core/storage-manager.js');
-  await import('../../src/core/settings.js');
+  await import('../../src/core/storage-manager.ts');
+  await import('../../src/core/settings.ts');
 
   // State management
-  await import('../../src/core/state-manager.js');
+  await import('../../src/core/state-manager.ts');
 
   // Site handlers
-  await import('../../src/site-handlers/base-handler.js');
-  await import('../../src/site-handlers/netflix-handler.js');
-  await import('../../src/site-handlers/youtube-handler.js');
-  await import('../../src/site-handlers/facebook-handler.js');
-  await import('../../src/site-handlers/amazon-handler.js');
-  await import('../../src/site-handlers/apple-handler.js');
-  await import('../../src/site-handlers/index.js');
+  await import('../../src/site-handlers/base-handler.ts');
+  await import('../../src/site-handlers/netflix-handler.ts');
+  await import('../../src/site-handlers/youtube-handler.ts');
+  await import('../../src/site-handlers/facebook-handler.ts');
+  await import('../../src/site-handlers/amazon-handler.ts');
+  await import('../../src/site-handlers/apple-handler.ts');
+  await import('../../src/site-handlers/index.ts');
 
   // Core controllers
-  await import('../../src/core/action-handler.js');
-  await import('../../src/core/video-controller.js');
+  await import('../../src/core/action-handler.ts');
+  await import('../../src/core/video-controller.ts');
 
   // UI components
-  await import('../../src/ui/controls.js');
-  await import('../../src/ui/drag-handler.js');
-  await import('../../src/ui/shadow-dom.js');
-  await import('../../src/ui/vsc-controller-element.js');
+  await import('../../src/ui/controls.ts');
+  await import('../../src/ui/drag-handler.ts');
+  await import('../../src/ui/shadow-dom.ts');
+  await import('../../src/ui/vsc-controller-element.ts');
 
   // Observers
-  await import('../../src/observers/mutation-observer.js');
-  await import('../../src/observers/media-observer.js');
+  await import('../../src/observers/mutation-observer.ts');
+  await import('../../src/observers/media-observer.ts');
 }
 
 /**
@@ -50,24 +50,24 @@ export async function loadCoreModules() {
  */
 export async function loadInjectModules() {
   await loadCoreModules();
-  await import('../../src/content/inject.js');
+  await import('../../src/content/inject.ts');
 }
 
 /**
  * Load minimal modules for lightweight tests
  */
 export async function loadMinimalModules() {
-  await import('../../src/utils/constants.js');
-  await import('../../src/utils/logger.js');
-  await import('../../src/core/storage-manager.js');
-  await import('../../src/core/settings.js');
+  await import('../../src/utils/constants.ts');
+  await import('../../src/utils/logger.ts');
+  await import('../../src/core/storage-manager.ts');
+  await import('../../src/core/settings.ts');
 }
 
 /**
  * Load observer modules for observer tests
  */
 export async function loadObserverModules() {
-  await import('../../src/utils/logger.js');
-  await import('../../src/utils/dom-utils.js');
-  await import('../../src/observers/mutation-observer.js');
+  await import('../../src/utils/logger.ts');
+  await import('../../src/utils/dom-utils.ts');
+  await import('../../src/observers/mutation-observer.ts');
 }

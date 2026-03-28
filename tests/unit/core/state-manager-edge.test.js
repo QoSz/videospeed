@@ -23,7 +23,7 @@ runner.beforeEach(() => {
 
 runner.afterEach(() => {
   cleanupChromeMock();
-  if (mockDOM) mockDOM.cleanup();
+  if (mockDOM) {mockDOM.cleanup();}
 });
 
 runner.test('registerController stores controller info', () => {

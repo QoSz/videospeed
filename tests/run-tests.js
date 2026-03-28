@@ -5,10 +5,9 @@
  * Usage: node tests/run-tests.js [unit|integration]
  */
 
-import { pathToFileURL } from 'url';
-import { readFileSync, existsSync } from 'fs';
+import { pathToFileURL, fileURLToPath } from 'url';
+import { existsSync } from 'fs';
 import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -46,7 +45,7 @@ global.chrome = {
           startHidden: false,
           controllerOpacity: 0.3,
           controllerButtonSize: 14,
-          blacklist: "www.instagram.com\nx.com",
+          blacklist: 'www.instagram.com\nx.com',
           logLevel: 3
         };
         setTimeout(() => callback(mockData), 10);

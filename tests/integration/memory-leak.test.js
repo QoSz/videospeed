@@ -136,17 +136,18 @@ runner.test('MutationObserver.stop disconnects main observer', async () => {
   const mutationObserver = new window.VSC.VideoMutationObserver(
     config,
     () => {},
-    () => {}
+    () => {},
+    null
   );
 
   mutationObserver.start(document);
 
-  // Verify observer was created
-  assert.exists(mutationObserver.observer, 'Main observer should exist after start');
+  // Verify observer was created (private _observer in TS migration)
+  assert.exists(mutationObserver._observer, 'Main observer should exist after start');
 
   mutationObserver.stop();
 
-  assert.equal(mutationObserver.observer, null, 'Main observer should be null after stop');
+  assert.equal(mutationObserver._observer, null, 'Main observer should be null after stop');
 });
 
 // --- Test 6 ---
@@ -157,22 +158,24 @@ runner.test('MutationObserver.stop clears shadow observers', async () => {
   const mutationObserver = new window.VSC.VideoMutationObserver(
     config,
     () => {},
-    () => {}
+    () => {},
+    null
   );
 
   mutationObserver.start(document);
 
   // Manually add shadow observers to simulate discovered shadow roots
-  const fakeHost1 = document.createElement('div');
-  const fakeHost2 = document.createElement('div');
+  const _fakeHost1 = document.createElement('div');
+  const _fakeHost2 = document.createElement('div');
 
   // Simulate shadow root observation by directly inserting into the map
+  // (private _shadowObservers in TS migration)
   const fakeShadowRoot1 = document.createElement('div');
   const fakeShadowRoot2 = document.createElement('div');
   const fakeObserver1 = new MutationObserver(() => {});
   const fakeObserver2 = new MutationObserver(() => {});
-  mutationObserver.shadowObservers.set(fakeShadowRoot1, fakeObserver1);
-  mutationObserver.shadowObservers.set(fakeShadowRoot2, fakeObserver2);
+  mutationObserver._shadowObservers.set(fakeShadowRoot1, fakeObserver1);
+  mutationObserver._shadowObservers.set(fakeShadowRoot2, fakeObserver2);
 
   // Verify shadow observers exist
   const rootsBefore = [...mutationObserver.getKnownShadowRoots()];
@@ -194,11 +197,11 @@ runner.test('EventManager.cleanup clears listeners map', async () => {
   // Setup event listeners which populates the listeners map
   eventManager.setupEventListeners(document);
 
-  assert.true(eventManager.listeners.size > 0, 'Listeners map should have entries after setup');
+  assert.true(eventManager._listeners.size > 0, 'Listeners map should have entries after setup');
 
   eventManager.cleanup();
 
-  assert.equal(eventManager.listeners.size, 0, 'Listeners map should be empty after cleanup');
+  assert.equal(eventManager._listeners.size, 0, 'Listeners map should be empty after cleanup');
 });
 
 // --- Test 8 ---
@@ -211,13 +214,13 @@ runner.test('EventManager.cleanup clears cooldown timer', async () => {
   // Activate cooldown which sets a timer
   eventManager.refreshCoolDown();
 
-  assert.true(eventManager.coolDownActive, 'Cooldown should be active');
-  assert.exists(eventManager.coolDownTimer, 'Cooldown timer should be set');
+  assert.true(eventManager._coolDownActive, 'Cooldown should be active');
+  assert.exists(eventManager._coolDownTimer, 'Cooldown timer should be set');
 
   eventManager.cleanup();
 
-  assert.equal(eventManager.coolDownTimer, null, 'Cooldown timer should be null after cleanup');
-  assert.false(eventManager.coolDownActive, 'Cooldown should be inactive after cleanup');
+  assert.equal(eventManager._coolDownTimer, null, 'Cooldown timer should be null after cleanup');
+  assert.false(eventManager._coolDownActive, 'Cooldown should be inactive after cleanup');
 });
 
 // --- Test 9 ---
@@ -237,16 +240,17 @@ runner.test('DragHandler resets _isDragging on cleanup', async () => {
   DragHandler._isDragging = false;
   assert.false(DragHandler._isDragging, '_isDragging should be false after reset');
 
-  // Now test the guard: when _isDragging is true, handleDrag returns early
+  // Test the forceReset behavior: when _isDragging is true, handleDrag calls
+  // forceReset() first (which sets _isDragging = false), then continues.
+  // With a video that has no vsc, handleDrag returns early after forceReset.
   DragHandler._isDragging = true;
 
-  // Call handleDrag with a video that has no vsc - it will return early
-  // but _isDragging stays true (guard prevents re-entry)
   const mockVideo = createMockVideo();
   DragHandler.handleDrag(mockVideo, new Event('mousedown'));
 
-  // _isDragging should still be true since handleDrag returned early (guard)
-  assert.true(DragHandler._isDragging, '_isDragging should remain true when drag is active (re-entry guard)');
+  // After TS migration, handleDrag calls forceReset() when _isDragging is true,
+  // which sets _isDragging to false. Then it returns early because video.vsc is null.
+  assert.false(DragHandler._isDragging, '_isDragging should be false after forceReset and early return');
 
   // Clean up static state
   DragHandler._isDragging = false;
@@ -268,14 +272,16 @@ runner.test('StateManager removes disconnected controllers during getAllMediaEle
 
   // Disconnect 3 videos by removing them from the DOM
   for (let i = 0; i < 3; i++) {
-    const { video, parentDiv } = items[i];
+    const { video: _video, parentDiv } = items[i];
     if (parentDiv.parentNode) {
       parentDiv.parentNode.removeChild(parentDiv);
     }
   }
 
-  // Call getAllMediaElements which triggers cleanup of disconnected controllers
+  // getAllMediaElements only filters connected elements (no cleanup side-effect).
+  // Call cleanupDisconnected explicitly to remove stale controller entries.
   const connectedElements = window.VSC.stateManager.getAllMediaElements();
+  window.VSC.stateManager.cleanupDisconnected();
 
   assert.equal(connectedElements.length, 2, 'Should return only 2 connected media elements');
   assert.equal(

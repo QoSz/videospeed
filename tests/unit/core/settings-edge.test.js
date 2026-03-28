@@ -7,7 +7,7 @@ import {
   installChromeMock,
   cleanupChromeMock,
   resetMockStorage,
-  getMockStorage,
+  getMockStorage as _getMockStorage,
 } from '../../helpers/chrome-mock.js';
 import { SimpleTestRunner, assert, createMockDOM, wait } from '../../helpers/test-utils.js';
 import { loadCoreModules } from '../../helpers/module-loader.js';
@@ -32,7 +32,7 @@ runner.beforeEach(() => {
 
 runner.afterEach(() => {
   cleanupChromeMock();
-  if (mockDOM) mockDOM.cleanup();
+  if (mockDOM) {mockDOM.cleanup();}
 });
 
 runner.test('save debounces lastSpeed-only saves', async () => {
@@ -52,7 +52,7 @@ runner.test('save debounces lastSpeed-only saves', async () => {
 
   window.VSC.StorageManager.set = async (settings) => {
     saveCount++;
-    if (settings.lastSpeed !== undefined) lastSavedSpeed = settings.lastSpeed;
+    if (settings.lastSpeed !== undefined) {lastSavedSpeed = settings.lastSpeed;}
   };
 
   config.save({ lastSpeed: 1.5 });

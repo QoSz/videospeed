@@ -338,7 +338,7 @@ runner.test('DragHandler _forceReset clears all state', () => {
   window.VSC.DragHandler._rafId = setTimeout(() => {}, 10000);
   window.VSC.DragHandler._dragTimeoutId = setTimeout(() => {}, 10000);
 
-  window.VSC.DragHandler._forceReset();
+  window.VSC.DragHandler.forceReset();
 
   assert.false(window.VSC.DragHandler._isDragging, '_isDragging should be false after _forceReset');
   assert.equal(window.VSC.DragHandler._rafId, null, '_rafId should be null after _forceReset');

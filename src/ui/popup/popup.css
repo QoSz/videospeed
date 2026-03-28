@@ -1,71 +1,26 @@
+@import '../../styles/tokens.css';
+
 /* ============================================
-   Video Speed Controller — Glassmorphism Theme
+   Video Speed Controller — Popup Theme
    ============================================ */
 
 :root {
-  /* Base palette */
-  --glass-bg-dark: #0f0f14;
-  --glass-bg-light: #1a1a24;
-
-  /* Glass surfaces */
-  --glass-surface: rgba(255, 255, 255, 0.06);
-  --glass-surface-hover: rgba(255, 255, 255, 0.1);
-  --glass-surface-active: rgba(255, 255, 255, 0.04);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-border-hover: rgba(255, 255, 255, 0.14);
-  --glass-divider: rgba(255, 255, 255, 0.06);
-
-  /* Accent gradient */
-  --accent-gradient: linear-gradient(135deg, #667eea, #764ba2);
-  --accent-start: #667eea;
-  --accent-end: #764ba2;
-  --accent-glow: rgba(102, 126, 234, 0.35);
-  --accent-glow-soft: rgba(102, 126, 234, 0.15);
-
-  /* Typography */
-  --text-primary: rgba(255, 255, 255, 0.92);
-  --text-secondary: rgba(255, 255, 255, 0.6);
-  --text-muted: rgba(255, 255, 255, 0.4);
+  /* Popup-specific: accent glow (stronger than shared default) */
+  --accent-glow-strong: rgba(102, 126, 234, 0.35);
 
   /* Power button states */
-  --power-enabled: #4ade80;
+  --power-enabled: var(--vsc-success);
   --power-enabled-bg: rgba(74, 222, 128, 0.1);
-  --power-disabled: #f87171;
+  --power-disabled: var(--vsc-danger);
   --power-disabled-bg: rgba(248, 113, 113, 0.1);
 
   /* Blur */
   --blur-strength: 20px;
-
-  /* Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-
-  /* Transitions */
-  --transition-fast: 0.15s ease;
-  --transition-base: 0.2s ease;
 }
 
-/* Light mode overrides */
+/* Light mode overrides (popup-specific) */
 @media (prefers-color-scheme: light) {
   :root {
-    --glass-bg-dark: #e8e8f0;
-    --glass-bg-light: #f0f0f8;
-
-    --glass-surface: rgba(255, 255, 255, 0.55);
-    --glass-surface-hover: rgba(255, 255, 255, 0.72);
-    --glass-surface-active: rgba(255, 255, 255, 0.45);
-    --glass-border: rgba(255, 255, 255, 0.5);
-    --glass-border-hover: rgba(255, 255, 255, 0.7);
-    --glass-divider: rgba(255, 255, 255, 0.4);
-
-    --accent-glow: rgba(102, 126, 234, 0.3);
-    --accent-glow-soft: rgba(102, 126, 234, 0.12);
-
-    --text-primary: rgba(15, 15, 20, 0.9);
-    --text-secondary: rgba(15, 15, 20, 0.55);
-    --text-muted: rgba(15, 15, 20, 0.35);
-
     --power-enabled-bg: rgba(74, 222, 128, 0.12);
     --power-disabled-bg: rgba(248, 113, 113, 0.12);
   }
@@ -80,13 +35,7 @@
 
 html,
 body {
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    'SF Pro Display',
-    'Segoe UI',
-    system-ui,
-    sans-serif;
+  font-family: var(--vsc-font-family);
   font-size: 14px;
   line-height: 1.4;
   -webkit-font-smoothing: antialiased;
@@ -94,8 +43,8 @@ body {
 }
 
 body {
-  background-color: var(--glass-bg-dark);
-  color: var(--text-primary);
+  background-color: var(--vsc-bg-dark);
+  color: var(--vsc-text-primary);
   min-width: 280px;
   width: 280px;
 }
@@ -103,10 +52,10 @@ body {
 /* Main glass panel */
 .popup-container {
   padding: 0;
-  background: var(--glass-surface);
+  background: var(--vsc-glass-bg);
   backdrop-filter: blur(var(--blur-strength));
   -webkit-backdrop-filter: blur(var(--blur-strength));
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--vsc-glass-border);
   border-radius: 0;
 }
 
@@ -131,55 +80,55 @@ body {
   justify-content: center;
   gap: 4px;
   padding: 12px 8px;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  background: var(--glass-surface);
+  border: 1px solid var(--vsc-glass-border);
+  border-radius: var(--vsc-radius-md);
+  background: var(--vsc-glass-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  color: var(--text-primary);
+  color: var(--vsc-text-primary);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition:
-    background var(--transition-base),
-    border-color var(--transition-base),
-    box-shadow var(--transition-base);
+    background var(--vsc-transition-base),
+    border-color var(--vsc-transition-base),
+    box-shadow var(--vsc-transition-base);
 }
 
 .control-btn:hover {
-  background: var(--glass-surface-hover);
-  border-color: var(--glass-border-hover);
+  background: var(--vsc-glass-hover);
+  border-color: var(--vsc-glass-border-hover);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .control-btn:active {
-  background: var(--glass-surface-active);
+  background: var(--vsc-glass-active);
   transform: scale(0.97);
 }
 
 /* Reset button — gradient accent, prominent */
 .reset-btn {
-  background: var(--accent-gradient);
+  background: var(--vsc-accent-gradient);
   border-color: transparent;
   color: #ffffff;
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  box-shadow: 0 4px 16px var(--accent-glow);
+  box-shadow: 0 4px 16px var(--accent-glow-strong);
 }
 
 .reset-btn:hover {
-  background: var(--accent-gradient);
+  background: var(--vsc-accent-gradient);
   border-color: transparent;
   color: #ffffff;
-  box-shadow: 0 6px 24px var(--accent-glow);
+  box-shadow: 0 6px 24px var(--accent-glow-strong);
   filter: brightness(1.1);
 }
 
 .reset-btn:active {
-  background: var(--accent-gradient);
+  background: var(--vsc-accent-gradient);
   filter: brightness(0.95);
-  box-shadow: 0 2px 10px var(--accent-glow);
+  box-shadow: 0 2px 10px var(--accent-glow-strong);
 }
 
 /* Preset grid */
@@ -196,51 +145,51 @@ body {
 /* Preset buttons — glass tiles */
 .preset-btn {
   padding: 10px 4px;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-sm);
-  background: var(--glass-surface);
+  border: 1px solid var(--vsc-glass-border);
+  border-radius: var(--vsc-radius-sm);
+  background: var(--vsc-glass-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  color: var(--text-primary);
+  color: var(--vsc-text-primary);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition:
-    background var(--transition-base),
-    border-color var(--transition-base),
-    box-shadow var(--transition-base),
-    color var(--transition-base);
+    background var(--vsc-transition-base),
+    border-color var(--vsc-transition-base),
+    box-shadow var(--vsc-transition-base),
+    color var(--vsc-transition-base);
 }
 
 .preset-btn:hover {
-  background: var(--glass-surface-hover);
-  border-color: var(--glass-border-hover);
+  background: var(--vsc-glass-hover);
+  border-color: var(--vsc-glass-border-hover);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .preset-btn:active {
-  background: var(--glass-surface-active);
+  background: var(--vsc-glass-active);
   transform: scale(0.95);
 }
 
 /* Active preset — gradient fill + glow */
 .preset-btn.active {
-  background: var(--accent-gradient);
+  background: var(--vsc-accent-gradient);
   border-color: transparent;
   color: #ffffff;
   font-weight: 700;
-  box-shadow: 0 4px 14px var(--accent-glow);
+  box-shadow: 0 4px 14px var(--vsc-accent-glow);
 }
 
 .preset-btn.active:hover {
   filter: brightness(1.1);
-  box-shadow: 0 6px 20px var(--accent-glow);
+  box-shadow: 0 6px 20px var(--vsc-accent-glow);
 }
 
 /* Footer */
 .footer {
-  border-top: 1px solid var(--glass-divider);
-  background: var(--glass-surface);
+  border-top: 1px solid var(--vsc-glass-divider);
+  background: var(--vsc-glass-bg);
   backdrop-filter: blur(var(--blur-strength));
   -webkit-backdrop-filter: blur(var(--blur-strength));
 }
@@ -268,20 +217,20 @@ body {
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--vsc-text-dim);
   cursor: pointer;
   transition:
-    background var(--transition-base),
-    color var(--transition-base);
+    background var(--vsc-transition-base),
+    color var(--vsc-transition-base);
 }
 
 .icon-btn:hover {
-  background: var(--glass-surface-hover);
-  color: var(--text-primary);
+  background: var(--vsc-glass-hover);
+  color: var(--vsc-text-primary);
 }
 
 .icon-btn:active {
-  background: var(--glass-surface-active);
+  background: var(--vsc-glass-active);
   transform: scale(0.95);
 }
 
@@ -308,8 +257,8 @@ body {
 
 /* Settings button */
 .settings-btn:hover {
-  background: var(--accent-glow-soft);
-  color: var(--accent-start);
+  background: var(--vsc-accent-glow-soft);
+  color: var(--vsc-accent-start);
 }
 
 /* Status */
@@ -318,7 +267,7 @@ body {
   background-color: transparent;
   font-size: 11px;
   font-weight: 500;
-  color: var(--text-muted);
+  color: var(--vsc-text-muted);
   text-align: left;
   animation: slideIn 0.3s ease;
 }
@@ -354,7 +303,7 @@ body {
 .control-btn:focus-visible,
 .preset-btn:focus-visible,
 .icon-btn:focus-visible {
-  outline: 2px solid var(--accent-start);
+  outline: 2px solid var(--vsc-accent-start);
   outline-offset: 2px;
 }
 

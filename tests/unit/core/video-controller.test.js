@@ -92,7 +92,7 @@ runner.test('VideoController should initialize speed based on settings', async (
   const mockVideo = createMockVideo();
   mockDOM.container.appendChild(mockVideo);
 
-  const controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
+  const _controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
 
   assert.equal(mockVideo.playbackRate, 2.0);
 });
@@ -221,7 +221,7 @@ runner.test('VideoController should initialize speed using adjustSpeed method', 
     return originalAdjustSpeed.call(this, video, value, options);
   };
 
-  const controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
+  const _controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
 
   // Should have called adjustSpeed with the stored speed
   assert.true(adjustSpeedCalled);
@@ -244,7 +244,7 @@ runner.test('VideoController should handle initialization with no stored speed',
   });
   mockDOM.container.appendChild(mockVideo);
 
-  const controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
+  const _controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
 
   // Should remain at default speed when no stored speed exists
   assert.equal(mockVideo.playbackRate, 1.0);
@@ -262,7 +262,7 @@ runner.test('VideoController should initialize in global speed mode correctly', 
   const mockVideo = createMockVideo({ playbackRate: 1.0 });
   mockDOM.container.appendChild(mockVideo);
 
-  const controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
+  const _controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
 
   // Should use global lastSpeed
   assert.equal(mockVideo.playbackRate, 2.25);
@@ -290,7 +290,7 @@ runner.test('VideoController should properly setup without play/seeked event han
     return originalAddEventListener.call(this, type, listener, options);
   };
 
-  const controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
+  const _controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
 
   // Should NOT have added play/seeked event listeners (those caused speed reset bug)
   const listenerTypes = addedListeners.map(l => l.type);
@@ -327,7 +327,7 @@ runner.test('VideoController should handle media events correctly', async () => 
     return originalAdjustSpeed.call(this, video, value, options);
   };
 
-  const controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
+  const _controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
 
   // Should have called adjustSpeed during initialization
   assert.true(adjustSpeedCalls.length > 0);

@@ -2,6 +2,7 @@ import esbuild from 'esbuild';
 import process from 'process';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
 import fs from 'fs-extra';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -20,6 +21,16 @@ const common = {
   format: 'iife', // preserve side-effects and simple global init without ESM runtime
   define: { 'process.env.NODE_ENV': '"production"' },
 };
+
+/**
+ * Resolve entry point: prefer .ts over .js when available.
+ * @param {string} jsPath - Path to the .js entry point
+ * @returns {string} Resolved path (.ts if it exists, otherwise .js)
+ */
+function resolveEntry(jsPath) {
+  const tsPath = jsPath.replace(/\.js$/, '.ts');
+  return existsSync(tsPath) ? tsPath : jsPath;
+}
 
 async function copyStaticFiles() {
   const rootDir = path.resolve(__dirname, '..');
@@ -44,7 +55,10 @@ async function copyStaticFiles() {
     // Perform copy operations
     for (const [src, dest] of Object.entries(pathsToCopy)) {
       await fs.copy(path.join(rootDir, src), dest, {
-        filter: (src) => !path.basename(src).endsWith('.js')
+        filter: (src) => {
+          const base = path.basename(src);
+          return !base.endsWith('.js') && !base.endsWith('.ts');
+        }
       });
     }
 
@@ -62,11 +76,11 @@ async function build() {
     const esbuildConfig = {
       ...common,
       entryPoints: {
-        'content': 'src/entries/content-entry.js',
-        'inject': 'src/entries/inject-entry.js',
-        'background': 'src/background.js',
-        'ui/popup/popup': 'src/ui/popup/popup.js',
-        'ui/options/options': 'src/ui/options/options.js'
+        'content': resolveEntry('src/entries/content-entry.js'),
+        'inject': resolveEntry('src/entries/inject-entry.js'),
+        'background': resolveEntry('src/background.js'),
+        'ui/popup/popup': resolveEntry('src/ui/popup/popup.js'),
+        'ui/options/options': resolveEntry('src/ui/options/options.js'),
       },
       outdir: 'dist',
     };

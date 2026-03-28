@@ -70,7 +70,7 @@ runner.test('VideoSpeedConfig should handle key bindings', async () => {
 });
 
 runner.test('VideoSpeedConfig should have state manager available', () => {
-  const config = window.VSC.videoSpeedConfig;
+  const _config = window.VSC.videoSpeedConfig;
 
   // Verify state manager is available (media tracking moved there)
   assert.exists(window.VSC.stateManager, 'State manager should be available');

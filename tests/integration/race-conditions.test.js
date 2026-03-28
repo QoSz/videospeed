@@ -7,7 +7,7 @@ import {
   installChromeMock,
   cleanupChromeMock,
   resetMockStorage,
-  getMockStorage,
+  getMockStorage as _getMockStorage,
 } from '../helpers/chrome-mock.js';
 import {
   SimpleTestRunner,
@@ -81,7 +81,7 @@ runner.test(
     actionHandler.setSpeed(video, 2.0);
     assert.equal(video.playbackRate, 2.0, 'Speed should be 2.0 after user set');
     assert.true(
-      eventManager.coolDownActive,
+      eventManager._coolDownActive,
       'Cooldown should be active after setSpeed'
     );
 

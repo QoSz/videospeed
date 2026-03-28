@@ -35,7 +35,7 @@ runner.beforeEach(() => {
 
 runner.afterEach(() => {
   cleanupChromeMock();
-  if (mockDOM) mockDOM.cleanup();
+  if (mockDOM) {mockDOM.cleanup();}
 
   // Restore console.log
   console.log = originalConsoleLog;

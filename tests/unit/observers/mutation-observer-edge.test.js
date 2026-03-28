@@ -26,7 +26,7 @@ runner.beforeEach(() => {
 
 runner.afterEach(() => {
   cleanupChromeMock();
-  if (mockDOM) mockDOM.cleanup();
+  if (mockDOM) {mockDOM.cleanup();}
 });
 
 // --- Tests ---
@@ -45,7 +45,7 @@ runner.test('MutationObserver can be constructed with callbacks', () => {
   assert.exists(observer, 'Observer should exist');
   assert.equal(observer.onVideoFound, onVideoFound, 'onVideoFound should be set');
   assert.equal(observer.onVideoRemoved, onVideoRemoved, 'onVideoRemoved should be set');
-  assert.equal(observer.observer, null, 'Internal observer should be null before start');
+  assert.equal(observer._observer, null, 'Internal observer should be null before start');
 });
 
 runner.test('start begins observing document', () => {
@@ -58,7 +58,7 @@ runner.test('start begins observing document', () => {
 
   observer.start(document);
 
-  assert.exists(observer.observer, 'Internal MutationObserver should be created after start');
+  assert.exists(observer._observer, 'Internal MutationObserver should be created after start');
 
   // Cleanup
   observer.stop();
@@ -73,10 +73,10 @@ runner.test('stop disconnects observer', () => {
   );
 
   observer.start(document);
-  assert.exists(observer.observer, 'Observer should exist after start');
+  assert.exists(observer._observer, 'Observer should exist after start');
 
   observer.stop();
-  assert.equal(observer.observer, null, 'Observer should be null after stop');
+  assert.equal(observer._observer, null, 'Observer should be null after stop');
 });
 
 runner.test('stop clears shadow observers', () => {
@@ -96,14 +96,14 @@ runner.test('stop clears shadow observers', () => {
   observer.observeShadowRoot(shadowRoot);
 
   assert.greaterThan(
-    observer.shadowObservers.size,
+    observer._shadowObservers.size,
     0,
     'Should have at least one shadow observer'
   );
 
   observer.stop();
 
-  assert.equal(observer.shadowObservers.size, 0, 'Shadow observers should be cleared after stop');
+  assert.equal(observer._shadowObservers.size, 0, 'Shadow observers should be cleared after stop');
 });
 
 runner.test('getKnownShadowRoots returns empty initially', () => {
@@ -250,8 +250,8 @@ runner.test('stop is safe to call multiple times', () => {
   observer.stop();
   observer.stop();
 
-  assert.equal(observer.observer, null, 'Observer should be null after double stop');
-  assert.equal(observer.shadowObservers.size, 0, 'Shadow observers should be empty');
+  assert.equal(observer._observer, null, 'Observer should be null after double stop');
+  assert.equal(observer._shadowObservers.size, 0, 'Shadow observers should be empty');
 });
 
 export { runner as mutationObserverEdgeTestRunner };

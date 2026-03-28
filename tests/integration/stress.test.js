@@ -7,7 +7,7 @@ import {
   installChromeMock,
   cleanupChromeMock,
   resetMockStorage,
-  getMockStorage,
+  getMockStorage as _getMockStorage,
 } from '../helpers/chrome-mock.js';
 import {
   SimpleTestRunner,
@@ -234,7 +234,7 @@ runner.test(
     const eventManager = new window.VSC.EventManager(config, null);
     const actionHandler = new window.VSC.ActionHandler(config, eventManager);
 
-    const video = createTestVideoWithController(config, actionHandler, 0);
+    const _video = createTestVideoWithController(config, actionHandler, 0);
 
     // Spy on StorageManager.set
     let storageSetCount = 0;

@@ -13,7 +13,7 @@ import {
   assert,
   createMockVideo,
   createMockDOM,
-  wait,
+  wait as _wait,
 } from '../../helpers/test-utils.js';
 import { loadCoreModules } from '../../helpers/module-loader.js';
 
@@ -34,7 +34,7 @@ runner.beforeEach(() => {
 
 runner.afterEach(() => {
   cleanupChromeMock();
-  if (mockDOM) mockDOM.cleanup();
+  if (mockDOM) {mockDOM.cleanup();}
   location.hostname = savedHostname;
   location.href = savedHref;
 });

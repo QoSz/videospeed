@@ -19,7 +19,7 @@ runner.beforeEach(() => {
 
 runner.afterEach(() => {
   cleanupChromeMock();
-  if (mockDOM) mockDOM.cleanup();
+  if (mockDOM) {mockDOM.cleanup();}
 });
 
 runner.test('createShadowDOM creates shadow root on wrapper', async () => {

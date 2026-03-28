@@ -104,7 +104,7 @@ runner.test('Blacklisted keys should be properly handled in options UI', async (
   const BLACKLISTED_KEYCODES = [9, 16, 17, 18, 91, 92, 93, 224];
 
   BLACKLISTED_KEYCODES.forEach(keyCode => {
-    const mockEvent = {
+    const _mockEvent = {
       keyCode: keyCode,
       preventDefault: () => { },
       stopPropagation: () => { }
@@ -148,9 +148,9 @@ runner.test('EventManager should handle F-keys correctly', async () => {
     currentTime: 0,
     duration: 100,
     classList: {
-      contains: (className) => false  // Mock classList for 'vsc-cancelled' check
+      contains: (_className) => false  // Mock classList for 'vsc-cancelled' check
     },
-    dispatchEvent: (event) => { /* Mock dispatchEvent for synthetic events */ },
+    dispatchEvent: (_event) => { /* Mock dispatchEvent for synthetic events */ },
     // Add DOM-related properties for controller creation
     tagName: 'VIDEO',
     currentSrc: 'test-video.mp4',
@@ -199,7 +199,7 @@ runner.test('Key display names should work for all supported keys', () => {
   // F13-F24 should have aliases
   for (let i = 13; i <= 24; i++) {
     const keyCode = 111 + i; // F13=124, etc.
-    const expectedAlias = `F${i}`;
+    const _expectedAlias = `F${i}`;
 
     // This test would fail with the old code but passes with our updates
     const hasAlias = keyCodeAliases[keyCode] !== undefined || keyCode === 124 + (i - 13);

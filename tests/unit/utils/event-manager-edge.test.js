@@ -29,7 +29,7 @@ runner.beforeEach(() => {
 
 runner.afterEach(() => {
   cleanupChromeMock();
-  if (mockDOM) mockDOM.cleanup();
+  if (mockDOM) {mockDOM.cleanup();}
 });
 
 /**
@@ -165,11 +165,11 @@ runner.test('handleKeydown ignores events in contentEditable elements', async ()
 runner.test('refreshCoolDown sets cooldown active', async () => {
   const { eventManager } = await createTestEventManager();
 
-  assert.false(eventManager.coolDownActive, 'Cooldown should start inactive');
+  assert.false(eventManager._coolDownActive, 'Cooldown should start inactive');
 
   eventManager.refreshCoolDown();
 
-  assert.true(eventManager.coolDownActive, 'Cooldown should be active after refreshCoolDown');
+  assert.true(eventManager._coolDownActive, 'Cooldown should be active after refreshCoolDown');
 
   eventManager.cleanup();
 });
@@ -181,15 +181,15 @@ runner.test('cleanup clears all listeners and timers', async () => {
   eventManager.setupEventListeners(document);
   eventManager.refreshCoolDown();
 
-  assert.greaterThan(eventManager.listeners.size, 0, 'Should have listeners before cleanup');
-  assert.true(eventManager.coolDownActive, 'Cooldown should be active before cleanup');
+  assert.greaterThan(eventManager._listeners.size, 0, 'Should have listeners before cleanup');
+  assert.true(eventManager._coolDownActive, 'Cooldown should be active before cleanup');
 
   eventManager.cleanup();
 
-  assert.equal(eventManager.listeners.size, 0, 'Listeners map should be empty after cleanup');
-  assert.false(eventManager.coolDownActive, 'Cooldown should be inactive after cleanup');
-  assert.equal(eventManager.coolDownTimer, null, 'Cooldown timer should be null after cleanup');
-  assert.true(eventManager.showTimers instanceof WeakMap, 'Show timers WeakMap should exist after cleanup');
+  assert.equal(eventManager._listeners.size, 0, 'Listeners map should be empty after cleanup');
+  assert.false(eventManager._coolDownActive, 'Cooldown should be inactive after cleanup');
+  assert.equal(eventManager._coolDownTimer, null, 'Cooldown timer should be null after cleanup');
+  assert.true(eventManager._showTimers instanceof WeakMap, 'Show timers WeakMap should exist after cleanup');
 });
 
 runner.test('showController adds vsc-show class', async () => {

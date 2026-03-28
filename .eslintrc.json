@@ -14,7 +14,7 @@
     "chrome": "readonly"
   },
   "rules": {
-    "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "destructuredArrayIgnorePattern": "^_" }],
     "no-console": "off",
     "prefer-const": "error",
     "no-var": "error",
@@ -35,13 +35,28 @@
   },
   "overrides": [
     {
-      "files": ["tests/**/*.js"],
-      "env": {
-        "jest": true
+      "files": ["src/**/*.ts"],
+      "parser": "@typescript-eslint/parser",
+      "parserOptions": {
+        "ecmaVersion": 2022,
+        "sourceType": "module",
+        "project": "./tsconfig.json"
       },
+      "extends": [
+        "plugin:@typescript-eslint/recommended"
+      ],
       "rules": {
-        "no-unused-expressions": "off"
+        "no-unused-vars": "off",
+        "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+        "@typescript-eslint/no-explicit-any": "error",
+        "@typescript-eslint/no-non-null-assertion": "warn",
+        "no-duplicate-imports": "off"
       }
+    },
+    {
+      "files": ["tests/**/*.js"],
+      "env": { "jest": true },
+      "rules": { "no-unused-expressions": "off" }
     }
   ]
 }

@@ -12,9 +12,9 @@ import {
 import {
   SimpleTestRunner,
   assert,
-  createMockVideo,
+  createMockVideo as _createMockVideo,
   createMockDOM,
-  wait,
+  wait as _wait,
 } from '../../helpers/test-utils.js';
 import { loadCoreModules } from '../../helpers/module-loader.js';
 
@@ -31,7 +31,7 @@ runner.beforeEach(() => {
 
 runner.afterEach(() => {
   cleanupChromeMock();
-  if (mockDOM) mockDOM.cleanup();
+  if (mockDOM) {mockDOM.cleanup();}
 });
 
 // --- initializeWhenReady ---
@@ -85,10 +85,10 @@ runner.test(
     });
 
     // Fire load event
-    if (loadListener) loadListener();
+    if (loadListener) {loadListener();}
     // Fire readystatechange
     fakeDoc.readyState = 'complete';
-    if (listeners['readystatechange']) listeners['readystatechange']();
+    if (listeners['readystatechange']) {listeners['readystatechange']();}
 
     assert.equal(callCount, 1, 'Callback should only fire once');
 
@@ -197,7 +197,7 @@ runner.test('findVideoParent stops at document body', async () => {
     assert.exists(result, 'Should return a valid element');
   } catch (e) {
     // Should not crash
-    assert.true(false, 'findVideoParent should not throw when near body: ' + e.message);
+    assert.true(false, `findVideoParent should not throw when near body: ${  e.message}`);
   }
 
   document.body.removeChild(child);

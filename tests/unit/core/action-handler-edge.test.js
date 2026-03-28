@@ -46,7 +46,7 @@ function createTestVideoWithController(config, actionHandler, videoOptions = {})
   const initialPlaybackRate = mockVideo.playbackRate;
 
   // Create a proper VideoController for this video
-  const controller = new window.VSC.VideoController(
+  const _controller = new window.VSC.VideoController(
     mockVideo,
     mockVideo.parentElement,
     config,

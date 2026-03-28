@@ -135,6 +135,9 @@ runner.test('Full flow: external change → force mode → restore → storage',
 runner.test('Full flow: mouse wheel → relative change → storage → UI', async () => {
   const config = window.VSC.videoSpeedConfig;
   await config.load();
+  config.settings.rememberSpeed = true;
+  // Set lastSpeed to 1.5 so the controller initializes the video at 1.5
+  config.settings.lastSpeed = 1.5;
 
   const eventManager = new window.VSC.EventManager(config, null);
   const actionHandler = new window.VSC.ActionHandler(config, eventManager);
@@ -144,7 +147,7 @@ runner.test('Full flow: mouse wheel → relative change → storage → UI', asy
   mockDOM.container.appendChild(mockVideo);
   const controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
 
-  // Track storage saves
+  // Track storage saves (set up after controller creation to avoid capturing init saves)
   const savedData = [];
   const originalSave = config.save;
   config.save = async function (data) {
@@ -209,6 +212,7 @@ runner.test(
 runner.test('Full flow: speed limits enforcement → clamping → correct storage', async () => {
   const config = window.VSC.videoSpeedConfig;
   await config.load();
+  config.settings.rememberSpeed = true;
 
   const eventManager = new window.VSC.EventManager(config, null);
   const actionHandler = new window.VSC.ActionHandler(config, eventManager);

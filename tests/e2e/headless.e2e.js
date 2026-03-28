@@ -7,7 +7,7 @@ import {
   launchChromeWithExtension,
   waitForExtension,
   waitForVideo,
-  waitForController,
+  waitForController as _waitForController,
   getVideoSpeed,
   controlVideo,
   sleep,

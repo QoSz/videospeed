@@ -4,71 +4,36 @@
   "description": "Speed up, slow down, advance and rewind HTML5 audio/video with shortcuts",
   "type": "module",
   "scripts": {
-    "build": "node scripts/build.mjs",
+    "build": "tsc --noEmit && node scripts/build.mjs",
     "dev": "node scripts/build.mjs --watch",
     "prebuild": "rm -rf dist",
     "test": "npm run build && npm run test:unit",
-    "test:unit": "node tests/run-tests.js unit",
-    "test:integration": "node tests/run-tests.js integration",
+    "test:unit": "tsx tests/run-tests.js unit",
+    "test:integration": "tsx tests/run-tests.js integration",
     "test:e2e": "npm run build && node tests/e2e/run-e2e.js",
     "test:browser": "echo 'Open tests/fixtures/test-page.html in browser'",
     "serve": "python3 -m http.server 8000",
-    "lint": "eslint src/**/*.js tests/**/*.js",
-    "lint:fix": "eslint src/**/*.js tests/**/*.js --fix",
-    "format": "prettier --write src/**/*.js tests/**/*.js",
+    "typecheck": "tsc --noEmit",
+    "typecheck:watch": "tsc --noEmit --watch",
+    "lint": "eslint 'src/**/*.{js,ts}' 'tests/**/*.{js,ts}'",
+    "lint:fix": "eslint 'src/**/*.{js,ts}' 'tests/**/*.{js,ts}' --fix",
+    "format": "prettier --write 'src/**/*.{js,ts}' 'tests/**/*.{js,ts}'",
     "zip": "npm run build && cd dist && zip -r videospeed.zip . && cd .. && echo 'Extension packaged at dist/videospeed.zip'"
   },
   "devDependencies": {
     "@eslint/js": "^8.57.0",
+    "@types/chrome": "^0.1.38",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "@typescript-eslint/parser": "^8.57.2",
     "esbuild": "^0.25.0",
     "eslint": "^8.57.0",
     "fs-extra": "^11.2.0",
     "globals": "^13.24.0",
     "jsdom": "^23.0.0",
     "prettier": "^3.1.0",
-    "puppeteer": "^24.10.2"
-  },
-  "eslintConfig": {
-    "env": {
-      "browser": true,
-      "es2022": true,
-      "node": true,
-      "webextensions": true
-    },
-    "extends": [
-      "eslint:recommended"
-    ],
-    "parserOptions": {
-      "ecmaVersion": 2022,
-      "sourceType": "module"
-    },
-    "globals": {
-      "chrome": "readonly"
-    },
-    "rules": {
-      "no-unused-vars": [
-        "error",
-        {
-          "argsIgnorePattern": "^_"
-        }
-      ],
-      "no-console": "off",
-      "prefer-const": "error",
-      "no-var": "error",
-      "eqeqeq": "error",
-      "curly": "error",
-      "semi": [
-        "error",
-        "always"
-      ],
-      "quotes": [
-        "error",
-        "single",
-        {
-          "avoidEscape": true
-        }
-      ]
-    }
+    "puppeteer": "^24.10.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   },
   "prettier": {
     "singleQuote": true,

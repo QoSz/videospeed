@@ -9,7 +9,7 @@ import {
   waitForVideo,
   waitForController,
   getVideoSpeed,
-  controlVideo,
+  controlVideo as _controlVideo,
   sleep,
   assert,
 } from './e2e-utils.js';

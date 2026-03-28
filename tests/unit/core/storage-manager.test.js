@@ -34,11 +34,11 @@ runner.beforeEach(() => {
 
 runner.afterEach(() => {
   cleanupChromeMock();
-  if (mockDOM) mockDOM.cleanup();
+  if (mockDOM) {mockDOM.cleanup();}
 
   // Clean up any leftover settings elements
   const el = document.getElementById('vsc-settings-data');
-  if (el) el.remove();
+  if (el) {el.remove();}
 
   delete window.VSC_settings;
 });

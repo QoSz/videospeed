@@ -1,0 +1,68 @@
+/* ============================================
+   Video Speed Controller — Shared Design Tokens
+   ============================================ */
+
+:root {
+  /* Background colors */
+  --vsc-bg-dark: #0f0f14;
+  --vsc-bg-light: #1a1a24;
+
+  /* Glass surfaces */
+  --vsc-glass-bg: rgba(255, 255, 255, 0.06);
+  --vsc-glass-hover: rgba(255, 255, 255, 0.1);
+  --vsc-glass-active: rgba(255, 255, 255, 0.04);
+  --vsc-glass-border: rgba(255, 255, 255, 0.08);
+  --vsc-glass-border-hover: rgba(255, 255, 255, 0.14);
+  --vsc-glass-divider: rgba(255, 255, 255, 0.06);
+
+  /* Accent gradient */
+  --vsc-accent-gradient: linear-gradient(135deg, #667eea, #764ba2);
+  --vsc-accent-start: #667eea;
+  --vsc-accent-end: #764ba2;
+  --vsc-accent-glow: rgba(102, 126, 234, 0.25);
+  --vsc-accent-glow-soft: rgba(102, 126, 234, 0.15);
+
+  /* Text colors */
+  --vsc-text-primary: rgba(255, 255, 255, 0.92);
+  --vsc-text-dim: rgba(255, 255, 255, 0.6);
+  --vsc-text-muted: rgba(255, 255, 255, 0.4);
+
+  /* Status colors */
+  --vsc-danger: #f87171;
+  --vsc-success: #4ade80;
+
+  /* Border radii */
+  --vsc-radius-sm: 8px;
+  --vsc-radius-md: 12px;
+  --vsc-radius-lg: 16px;
+
+  /* Transitions */
+  --vsc-transition-fast: 0.15s ease;
+  --vsc-transition-base: 0.2s ease;
+
+  /* Font stack */
+  --vsc-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui,
+    sans-serif;
+}
+
+/* Light mode overrides */
+@media (prefers-color-scheme: light) {
+  :root {
+    --vsc-bg-dark: #e8e8f0;
+    --vsc-bg-light: #f0f0f8;
+
+    --vsc-glass-bg: rgba(255, 255, 255, 0.55);
+    --vsc-glass-hover: rgba(255, 255, 255, 0.72);
+    --vsc-glass-active: rgba(255, 255, 255, 0.45);
+    --vsc-glass-border: rgba(255, 255, 255, 0.5);
+    --vsc-glass-border-hover: rgba(255, 255, 255, 0.7);
+    --vsc-glass-divider: rgba(255, 255, 255, 0.4);
+
+    --vsc-accent-glow: rgba(102, 126, 234, 0.15);
+    --vsc-accent-glow-soft: rgba(102, 126, 234, 0.12);
+
+    --vsc-text-primary: rgba(15, 15, 20, 0.9);
+    --vsc-text-dim: rgba(15, 15, 20, 0.55);
+    --vsc-text-muted: rgba(15, 15, 20, 0.35);
+  }
+}

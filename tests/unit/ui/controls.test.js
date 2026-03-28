@@ -24,7 +24,7 @@ runner.beforeEach(() => {
 
 runner.afterEach(() => {
   cleanupChromeMock();
-  if (mockDOM) mockDOM.cleanup();
+  if (mockDOM) {mockDOM.cleanup();}
 });
 
 /**
@@ -44,7 +44,7 @@ function createControlsSetup() {
     lastAction = { action, value };
   };
 
-  const origAdjustSpeed = actionHandler.adjustSpeed.bind(actionHandler);
+  const _origAdjustSpeed = actionHandler.adjustSpeed.bind(actionHandler);
   actionHandler.adjustSpeed = (video, speedDelta, options) => {
     adjustSpeedCalled = true;
     lastAdjustArgs = { video, speedDelta, options };
@@ -78,12 +78,12 @@ function createControlsSetup() {
   };
 }
 
-runner.test('setupControlEvents sets up click handlers on all buttons', async () => {
+runner.test('setupControls sets up click handlers on all buttons', async () => {
   const config = window.VSC.videoSpeedConfig;
   await config.load();
 
   const setup = createControlsSetup();
-  setup.controlsManager.setupControlEvents(setup.shadow, setup.video);
+  setup.controlsManager.setupControls(setup.shadow, setup.video);
 
   // Click the 'faster' button
   const fasterBtn = setup.shadow.querySelector('button[data-action="faster"]');
@@ -101,7 +101,7 @@ runner.test('clicking slower button triggers slower action', async () => {
   await config.load();
 
   const setup = createControlsSetup();
-  setup.controlsManager.setupControlEvents(setup.shadow, setup.video);
+  setup.controlsManager.setupControls(setup.shadow, setup.video);
 
   const slowerBtn = setup.shadow.querySelector('button[data-action="slower"]');
   slowerBtn.dispatchEvent(new Event('click', { bubbles: true }));
@@ -116,7 +116,7 @@ runner.test('clicking rewind button triggers rewind action', async () => {
   await config.load();
 
   const setup = createControlsSetup();
-  setup.controlsManager.setupControlEvents(setup.shadow, setup.video);
+  setup.controlsManager.setupControls(setup.shadow, setup.video);
 
   const rewindBtn = setup.shadow.querySelector('button[data-action="rewind"]');
   rewindBtn.dispatchEvent(new Event('click', { bubbles: true }));
@@ -131,7 +131,7 @@ runner.test('clicking advance button triggers advance action', async () => {
   await config.load();
 
   const setup = createControlsSetup();
-  setup.controlsManager.setupControlEvents(setup.shadow, setup.video);
+  setup.controlsManager.setupControls(setup.shadow, setup.video);
 
   const advanceBtn = setup.shadow.querySelector('button[data-action="advance"]');
   advanceBtn.dispatchEvent(new Event('click', { bubbles: true }));
@@ -146,7 +146,7 @@ runner.test('clicking display button triggers display action', async () => {
   await config.load();
 
   const setup = createControlsSetup();
-  setup.controlsManager.setupControlEvents(setup.shadow, setup.video);
+  setup.controlsManager.setupControls(setup.shadow, setup.video);
 
   const displayBtn = setup.shadow.querySelector('button[data-action="display"]');
   displayBtn.dispatchEvent(new Event('click', { bubbles: true }));
@@ -161,7 +161,7 @@ runner.test('mousedown on draggable triggers drag event', async () => {
   await config.load();
 
   const setup = createControlsSetup();
-  setup.controlsManager.setupControlEvents(setup.shadow, setup.video);
+  setup.controlsManager.setupControls(setup.shadow, setup.video);
 
   const draggable = setup.shadow.querySelector('.draggable');
   assert.exists(draggable, 'Draggable element should exist');
@@ -181,7 +181,7 @@ runner.test('wheel event with large deltaY triggers speed adjustment', async () 
   await config.load();
 
   const setup = createControlsSetup();
-  setup.controlsManager.setupControlEvents(setup.shadow, setup.video);
+  setup.controlsManager.setupControls(setup.shadow, setup.video);
 
   const controller = setup.shadow.querySelector('#controller');
   assert.exists(controller, 'Controller element should exist');
@@ -202,7 +202,7 @@ runner.test('wheel event with small deltaY (touchpad) is ignored', async () => {
   await config.load();
 
   const setup = createControlsSetup();
-  setup.controlsManager.setupControlEvents(setup.shadow, setup.video);
+  setup.controlsManager.setupControls(setup.shadow, setup.video);
 
   const controller = setup.shadow.querySelector('#controller');
 

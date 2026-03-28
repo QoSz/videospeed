@@ -157,9 +157,9 @@ runner.test('remove clears blinkTimeOut if set', async () => {
   const controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
 
   // Simulate a pending blink timer on the controller div
-  let timerCallbackExecuted = false;
+  let _timerCallbackExecuted = false;
   controller.div.blinkTimeOut = setTimeout(() => {
-    timerCallbackExecuted = true;
+    _timerCallbackExecuted = true;
   }, 50000);
 
   assert.notEqual(
@@ -253,7 +253,7 @@ runner.test('expectedSpeed is set during initialization', async () => {
   const mockVideo = createMockVideo({ playbackRate: 1.0 });
   mockDOM.container.appendChild(mockVideo);
 
-  const controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
+  const _controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
 
   assert.exists(mockVideo.vsc.expectedSpeed, 'expectedSpeed should be set after initialization');
   assert.equal(
@@ -321,7 +321,7 @@ runner.test('controller stores speedIndicator reference', async () => {
   const mockVideo = createMockVideo();
   mockDOM.container.appendChild(mockVideo);
 
-  const controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
+  const _controller = new window.VSC.VideoController(mockVideo, null, config, actionHandler);
 
   assert.exists(mockVideo.vsc.speedIndicator, 'speedIndicator should exist on video.vsc');
   assert.exists(
